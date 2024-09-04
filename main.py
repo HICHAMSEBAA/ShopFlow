@@ -49,95 +49,206 @@ class ExcelCrafterApp:
 
 
     
-# Sall part ----------------------------------------------------------------------------
+# Sales part ----------------------------------------------------------------------------
 
     def open_sales_window(self):
-        selected_item = self.treeview.selection()  # Get the selected item
+        """
+        Opens a new window for processing a sale of the selected product.
+        """
+        # Get the selected item from the Treeview
+        selected_item = self.treeview.selection()
         
+        # If no item is selected, show an error message and exit the function
         if not selected_item:
             messagebox.showerror("Error", "Please select a product first.")
             return
         
-        # Retrieve the values of the selected item
+        # Try to retrieve the details of the selected product
         try:
             product_details = self.treeview.item(selected_item, "values")
+            # Unpack the product details
             product_name, category, product_type, available_quantity, price, date, time = product_details
             
+            # Check if the product is out of stock
             if int(available_quantity) <= 0:
                 messagebox.showinfo("Info", "The product is out of stock.")
                 return
         except Exception as e:
+            # If there's an error retrieving product details, show an error message
             messagebox.showerror("Error", f"Failed to retrieve product details: {e}")
             return
         
+        # Create a new top-level window for the sales operation
         sales_window = tk.Toplevel(self.root)
         sales_window.title("Sales Operation")
         
+        # Determine which type of sales window to create based on the product category
         if category == "SIM Card":
-            self.create_sales_window(sales_window, product_name, category, product_type, available_quantity, price, product_type_list=self.combo_list_SIMCardType, window_title="Sales SIMCards")
+            self.create_sales_window(
+                sales_window, 
+                product_name, 
+                category, 
+                product_type, 
+                available_quantity, 
+                price, 
+                product_type_list=self.combo_list_SIMCardType, 
+                window_title="Sales SIMCards"
+            )
         else:
-            self.create_sales_window(sales_window, product_name, category, product_type, available_quantity, price, product_type_list=self.combo_list_SIMCardType, window_title="Sales Products")
+            self.create_sales_window(
+                sales_window, 
+                product_name, 
+                category, 
+                product_type, 
+                available_quantity, 
+                price, 
+                product_type_list=self.combo_list_SIMCardType, 
+                window_title="Sales Products"
+            )
 
     def create_sales_window(self, sales_window, product_name, category, product_type, available_quantity, price, product_type_list, window_title):
+        """
+        Creates and configures the sales window with all necessary widgets.
+        
+        Parameters:
+        - sales_window: The Toplevel window where the sales operation will take place.
+        - product_name: Name of the product being sold.
+        - category: Category of the product.
+        - product_type: Type of the product.
+        - available_quantity: Current stock quantity of the product.
+        - price: Price of the product.
+        - product_type_list: List of product types for the Combobox.
+        - window_title: Title of the sales window.
+        """
+        # Create the main frame within the sales window
         main_frame = ttk.Frame(sales_window)
         main_frame.pack(fill="both", expand=True)
 
+        # Create a labeled frame to hold the sales widgets
         frame_widgets = ttk.LabelFrame(main_frame, text=window_title)
         frame_widgets.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
         
-        # Product Name
+        # ------------------ Product Name ------------------
+        # Label for product name
         name_label = ttk.Label(frame_widgets, text="Name:")
         name_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        
+        # Entry widget for product name (disabled as it's pre-filled)
         product_name_entry = ttk.Entry(frame_widgets)
         product_name_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         product_name_entry.insert(0, product_name)  # Set the initial value
-        product_name_entry.config(state="disabled")  # Disable the entry
+        product_name_entry.config(state="disabled")  # Disable the entry to prevent editing
         
-        # Category
+        # ------------------ Category ------------------
+        # Label for category
         category_label = ttk.Label(frame_widgets, text="Category:")
         category_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
-        category_combobox = ttk.Combobox(frame_widgets, values=self.combo_list_ProductCategory, state="readonly")
-        category_combobox.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
-        category_combobox.set(category)
-        category_combobox.config(state="disabled")
         
-        # Type
+        # Combobox for category (disabled as it's pre-filled)
+        category_combobox = ttk.Combobox(
+            frame_widgets, 
+            values=self.combo_list_ProductCategory, 
+            state="readonly"
+        )
+        category_combobox.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        category_combobox.set(category)  # Set the initial value
+        category_combobox.config(state="disabled")  # Disable editing
+        
+        # ------------------ Type ------------------
+        # Label for product type
         type_label = ttk.Label(frame_widgets, text="Type:")
         type_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
-        type_combobox = ttk.Combobox(frame_widgets, values=product_type_list, state="readonly")
-        type_combobox.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
-        type_combobox.set(product_type if window_title != "Sales SIMCards" else "Normal")
-        type_combobox.config(state="disable" if window_title != "Sales SIMCards" else "normal")
         
-        # Quantity
+        # Combobox for product type
+        type_combobox = ttk.Combobox(
+            frame_widgets, 
+            values=product_type_list, 
+            state="readonly"
+        )
+        type_combobox.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Set the initial value and configure state based on window title
+        if window_title != "Sales SIMCards":
+            type_combobox.set(product_type)
+            type_combobox.config(state="disabled")  # Disable if not SIM Cards
+        else:
+            type_combobox.set("Normal")  # Default value for SIM Cards
+            type_combobox.config(state="normal")  # Enable editing
+        
+        # ------------------ Quantity ------------------
+        # Label for quantity to sell
         quantity_label = ttk.Label(frame_widgets, text="Quantity:")
         quantity_label.grid(row=3, column=0, padx=5, pady=5, sticky="w")
-        quantity_spinbox = ttk.Spinbox(frame_widgets, from_=0, to=int(available_quantity))
+        
+        # Spinbox for selecting quantity to sell (from 0 to available_quantity)
+        quantity_spinbox = ttk.Spinbox(
+            frame_widgets, 
+            from_=0, 
+            to=int(available_quantity)
+        )
         quantity_spinbox.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
         
-        # Price
+        # ------------------ Price ------------------
+        # Label for price
         price_label = ttk.Label(frame_widgets, text="Price:")
         price_label.grid(row=4, column=0, padx=5, pady=5, sticky="w")
-        price_spinbox = ttk.Spinbox(frame_widgets, from_=0.0, to=10000.0, increment=50)
-        price_spinbox.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
-        price_spinbox.insert(0, price if window_title != "Sales SIMCards" else 0)  # Set the initial value
-        price_spinbox.config(state="disable" if window_title != "Sales SIMCards" else "normal")
         
-        # Sell Button
-        sell_button = ttk.Button(frame_widgets, text="Sell", command=lambda: self.sell_product_from_window(product_name, category_combobox, type_combobox, quantity_spinbox, sales_window))
+        # Spinbox for setting the price (from 0.0 to 10000.0 with increments of 50)
+        price_spinbox = ttk.Spinbox(
+            frame_widgets, 
+            from_=0.0, 
+            to=10000.0, 
+            increment=50
+        )
+        price_spinbox.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Set the initial price value and configure state based on window title
+        if window_title != "Sales SIMCards":
+            price_spinbox.insert(0, price)  # Set the initial price
+            price_spinbox.config(state="disabled")  # Disable if not SIM Cards
+        else:
+            price_spinbox.insert(0, 0)  # Default price for SIM Cards
+            price_spinbox.config(state="normal")  # Enable editing
+        
+        # ------------------ Sell Button ------------------
+        # Button to execute the sell operation
+        sell_button = ttk.Button(
+            frame_widgets, 
+            text="Sell", 
+            command=lambda: self.sell_product_from_window(
+                product_name, 
+                category_combobox, 
+                type_combobox, 
+                quantity_spinbox, 
+                sales_window
+            )
+        )
         sell_button.grid(row=6, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
-     
+
     def sell_product_from_window(self, product_name, category_combobox, type_combobox, quantity_spinbox, window):
+        """
+        Processes the sale of a product by updating the inventory and recording the sale.
+        
+        Parameters:
+        - product_name: Name of the product being sold.
+        - category_combobox: Combobox widget for product category.
+        - type_combobox: Combobox widget for product type.
+        - quantity_spinbox: Spinbox widget for quantity to sell.
+        - window: The sales window to be closed after processing the sale.
+        """
         # Validate the quantity entered by the user
         try:
-            quantity_sold = int(quantity_spinbox.get())
+            quantity_sold = int(quantity_spinbox.get())  # Get the quantity to sell
             if quantity_sold <= 0:
+                # If quantity is not positive, show an error message
                 messagebox.showerror("Error", "Please enter a valid quantity.")
                 return
         except Exception as e:
+            # If there's an error parsing the quantity, show an error message
             messagebox.showerror("Error", f"An error occurred while processing the quantity: {e}")
             return
         
+        # Path to the products Excel file
         path = "products.xlsx"
         
         try:
@@ -145,69 +256,99 @@ class ExcelCrafterApp:
             workbook = openpyxl.load_workbook(path)
             sheet = workbook.active
 
-            # Search for the product in the Excel sheet and update its quantity
+            # Iterate through the rows to find the matching product
             for row in sheet.iter_rows(min_row=2, values_only=False):
                 if row[0].value == product_name:
-                    available_quantity = int(row[3].value)
+                    available_quantity = int(row[3].value)  # Current stock
                     
-                    # Check if there is sufficient stock
+                    # Check if there is sufficient stock to fulfill the sale
                     if quantity_sold > available_quantity:
+                        # If not enough stock, show a warning message
                         messagebox.showwarning("Insufficient Stock", f"Only {available_quantity} units available.")
                         return
                     else:
+                        # Deduct the sold quantity from available stock
                         row[3].value = available_quantity - quantity_sold
+                        # Prepare the updated data for the Treeview
                         new_data = [row[i].value for i in range(len(row))]
                         break
+            else:
+                # If the product was not found in the Excel sheet, show a warning
+                messagebox.showwarning("Product Not Found", "The specified product was not found.")
+                return
 
-            # Save the updated workbook
+            # Save the updated workbook back to the file
             workbook.save(path)
             
             # Record the sale in the sales log
-            self.record_sale(product_name, str(category_combobox.get()), str(type_combobox.get()), quantity_sold)
+            self.record_sale(
+                product_name, 
+                str(category_combobox.get()), 
+                str(type_combobox.get()), 
+                quantity_sold
+            )
             
-            # Close the sale window
+            # Close the sales window after successful sale
             window.destroy()
 
             # Notify the user of the successful sale
             messagebox.showinfo("Success", "Product sold successfully!")
             
-            # Update Treeview / Refresh the table view to reflect the updated quantities
+            # Update the Treeview to reflect the new quantity
             for item in self.treeview.get_children():
-                if self.treeview.item(item, "values")[0] == self.selected_item:
+                if self.treeview.item(item, "values")[0] == product_name:
                     self.treeview.item(item, values=new_data)
                     break
             
+            # Reset any necessary variables or states
             self.reset()
             
-            
-            
         except Exception as e:
+            # If any error occurs during the sale process, show an error message
             messagebox.showerror("Error", f"An error occurred while selling the product: {e}")
-          
+
     def record_sale(self, product_name, category, type, quantity_sold):
+        """
+        Records the sale details into the sales Excel file.
+        
+        Parameters:
+        - product_name: Name of the product sold.
+        - category: Category of the product.
+        - type: Type of the product.
+        - quantity_sold: Quantity of the product sold.
+        """
+        # Path to the sales Excel file
         sales_path = "sales.xlsx"
+        
+        # Get the current date and time for the sale record
         current_date = datetime.now().strftime("%Y-%m-%d")
         current_time = datetime.now().strftime("%H:%M:%S")
         
+        # Create a list representing the sale record
         sale_record = [product_name, category, type, quantity_sold, current_date, current_time]
 
         try:
             if not os.path.exists(sales_path):
-                # Create sales file with headers if it doesn't exist
+                # If the sales file doesn't exist, create it and add headers
                 workbook = openpyxl.Workbook()
                 sheet = workbook.active
                 headers = ["Product Name", "Category", "Type", "Quantity Sold", "Date", "Time"]
                 sheet.append(headers)
             else:
+                # If the sales file exists, load it
                 workbook = openpyxl.load_workbook(sales_path)
                 sheet = workbook.active
 
+            # Append the sale record to the sales sheet
             sheet.append(sale_record)
+            # Save the workbook
             workbook.save(sales_path)
         except Exception as e:
+            # If there's an error recording the sale, show an error message
             messagebox.showerror("Error", f"An error occurred while recording the sale: {e}")
-       
+
 # ---------------------------------------------------------------------------------------
+
 
 
 # GUI PART ------------------------------------------------------------------------------
