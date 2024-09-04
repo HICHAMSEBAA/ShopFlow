@@ -362,27 +362,27 @@ class ExcelCrafterApp:
         self.tab1 = ttk.Frame(self.notebook)
         self.notebook.add(self.tab1, text="Products")
 
+
     def add_product_widgets(self, frame):
+        """Creates and adds the widgets for the product management section."""
         frame_widgets = ttk.LabelFrame(frame, text="Products")
         frame_widgets.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
-        
+
         # Product Name
         name_label = ttk.Label(frame_widgets, text="Name:")
         name_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
         self.product_name_entry = ttk.Entry(frame_widgets)
         self.product_name_entry.bind("<FocusIn>", lambda e: self.clear_entry(self.product_name_entry, "Name"))
         self.product_name_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
-        
+
         # Category
         category_label = ttk.Label(frame_widgets, text="Category:")
         category_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
         self.category_combobox = ttk.Combobox(frame_widgets, values=self.combo_list_ProductCategory, state="readonly")
-        self.category_combobox.current(0)
+        self.category_combobox.current(0)  # Default to the first category
         self.category_combobox.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
-        
-        # Bind the category combobox selection event
-        self.category_combobox.bind("<<ComboboxSelected>>", self.on_category_selected)
-        
+        self.category_combobox.bind("<<ComboboxSelected>>", self.on_category_selected)  # Bind category selection event
+
         # Type
         type_label = ttk.Label(frame_widgets, text="Type:")
         type_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
@@ -390,60 +390,65 @@ class ExcelCrafterApp:
         self.type_combobox.current(0)
         self.type_combobox.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
         self.type_combobox.config(state="disabled")
-        
-        # Type
+
+        # Memory Type
         type_label_ = ttk.Label(frame_widgets, text="Memory Type:")
         type_label_.grid(row=3, column=0, padx=5, pady=5, sticky="w")
         self.memoryType_combobox = ttk.Combobox(frame_widgets, values=self.combo_list_MemoryType, state="readonly")
         self.memoryType_combobox.current(0)
         self.memoryType_combobox.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
         self.memoryType_combobox.config(state="disabled")
-        
+
         # Quantity
         quantity_label = ttk.Label(frame_widgets, text="Quantity:")
         quantity_label.grid(row=4, column=0, padx=5, pady=5, sticky="w")
         self.quantity_spinbox = ttk.Spinbox(frame_widgets, from_=1, to=1000)
         self.quantity_spinbox.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
-        
+
         # Price
         price_label = ttk.Label(frame_widgets, text="Price:")
         price_label.grid(row=5, column=0, padx=5, pady=5, sticky="w")
         self.price_spinbox = ttk.Spinbox(frame_widgets, from_=0.0, to=10000.0, increment=50)
         self.price_spinbox.grid(row=5, column=1, padx=5, pady=5, sticky="ew")
-        
-        # Buttons
+
+        # Buttons for product operations
         self.insert_button = ttk.Button(frame_widgets, text="Insert", command=self.insert_product)
         self.insert_button.grid(row=6, column=0, padx=5, pady=5, sticky="nsew")
-        
+
         self.update_button = ttk.Button(frame_widgets, text="Update", command=self.update_product)
         self.update_button.grid(row=6, column=1, padx=5, pady=5, sticky="nsew")
         self.update_button.config(state="disabled")
-        
+
         self.delete_button = ttk.Button(frame_widgets, text="Delete", command=self.delete_product)
         self.delete_button.grid(row=7, column=0, padx=5, pady=5, sticky="nsew")
         self.delete_button.config(state="disabled")
-        
-        self.canceled_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset)
-        self.canceled_button.grid(row=7, column=1, padx=5, pady=5, sticky="nsew")
-        self.canceled_button.config(state="disabled")
-        
+
+        self.cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset)
+        self.cancel_button.grid(row=7, column=1, padx=5, pady=5, sticky="nsew")
+        self.cancel_button.config(state="disabled")
+
+        # Separator for better UI structure
         separator = ttk.Separator(frame_widgets)
         separator.grid(row=8, column=0, columnspan=2, padx=(20, 10), pady=10, sticky="ew")
-        
-        self.Sales_button = ttk.Button(frame_widgets, text="Sale", command=self.open_sales_window)
-        self.Sales_button.grid(row=9, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
-        self.Sales_button.config(state="disable")
-        
-        # Configure grid weights
+
+        # Sales Button
+        self.sales_button = ttk.Button(frame_widgets, text="Sale", command=self.open_sales_window)
+        self.sales_button.grid(row=9, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
+        self.sales_button.config(state="disable")
+
+        # Configure grid weights for better resizing behavior
         frame_widgets.columnconfigure(0, weight=1)
         frame_widgets.columnconfigure(1, weight=1)
-    
+
+
     def create_treeview(self, frame, path, columns):
+        """Creates the treeview widget for displaying product data."""
         tree_frame = ttk.Frame(frame)
         tree_frame.grid(row=1, column=2, padx=20, pady=10, sticky="nsew")
         tree_scroll = ttk.Scrollbar(tree_frame)
         tree_scroll.pack(side="right", fill="y")
-        
+
+        # Configure treeview
         self.treeview = ttk.Treeview(tree_frame, show="headings", yscrollcommand=tree_scroll.set, columns=columns, height=13)
         for col in columns:
             self.treeview.column(col, width=100, anchor="center")
@@ -451,19 +456,21 @@ class ExcelCrafterApp:
 
         self.treeview.pack(fill="both", expand=True)
         tree_scroll.config(command=self.treeview.yview)
-        
-        # Bind the select event to the Treeview
+
+        # Bind selection event to Treeview
         self.treeview.bind("<<TreeviewSelect>>", self.on_item_selected)
-        
-        # Load data
+
+        # Load data into the treeview
         self.load_data(path=path)
-    
+
+
     def page_title(self, frame, title):
+        """Creates and displays the page title."""
         # Create a frame for the title to manage layout
         title_frame = ttk.Frame(frame)
         title_frame.grid(row=0, column=1, columnspan=2, padx=20, pady=10, sticky="ew")
 
-        # Create a label with large text
+        # Create a label with large text for the title
         title_label = ttk.Label(title_frame, text=title, font=("Helvetica", 24, "bold"))
         title_label.grid(row=0, column=0, padx=10, pady=10, sticky="n")
         title_label.config(anchor="center", foreground="#333333")
@@ -471,7 +478,9 @@ class ExcelCrafterApp:
         # Adjust column weights to center the title
         title_frame.columnconfigure(0, weight=1)
 
+
     def create_search(self, frame, path):
+        """Creates the search bar for filtering products in the treeview."""
         search_frame = ttk.Frame(frame)
         search_frame.grid(row=0, column=0, padx=20, pady=10, sticky="ew")
 
@@ -480,11 +489,13 @@ class ExcelCrafterApp:
 
         self.search_entry = ttk.Entry(search_frame)
         self.search_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
-        self.search_entry.bind("<KeyRelease>", self.search_data)  # Bind the search function to key release events
+        self.search_entry.bind("<KeyRelease>", self.search_data)  # Bind search function to key release events
 
+        # Configure grid weight to ensure proper resizing
         search_frame.columnconfigure(1, weight=1)
 
-# GUI PART ------------------------------------------------------------------------------
+    # GUI PART ------------------------------------------------------------------------------
+
 
 # FUN PART ------------------------------------------------------------------------------
 
