@@ -1,4 +1,4 @@
-#!/home/hicham/Hicham/Python/ExcelCrafter/VExcelCrafter/bin/python3
+#!/home/hicham/Hicham/Python/ShopFlow/VShopFlow/bin/python3
 import tkinter as tk
 from tkinter import ttk
 import openpyxl
@@ -7,6 +7,7 @@ from datetime import datetime
 from tkinter import messagebox
 import uuid
 import threading
+from tkcalendar import DateEntry 
 
 class ExcelCrafterApp:
     def __init__(self, root):
@@ -23,17 +24,71 @@ class ExcelCrafterApp:
         self.combo_list_ProductCategory = ["Adapter", "Cable", "Car Accessory", "Car Charger", "Charger", "Flash USB", "Earphone", "Memory Card", "Shock Glasses", "SIM Card", "Other"] 
         self.combo_list_ProductType = ["Auxiliary", "Bluetooth", "iPhone", "Micro USB", "Simple Phone", "Smart Phone", "Type C", "Wired", "Other"]
         self.combo_list_MemoryType = ["1 GB", "2 GB", "4 GB", "8 GB", "16 GB", "32 GB", "64 GB", "128 GB", "256 GB"]
-        self.combo_list_SIMCardType = ["GOLD", "LEGEND", "MOBTASIM", "SAMA", "Normal", "Other"]
-
-        # Initialize a variable to keep track of the selected item in the Treeview
-        self.selected_item = None
+        self.combo_list_SIMCardType = ["GOLD", "DIMA","DIMA+", "YOOZ", "LEGEND", "LEGEND", "ZID", "MOBTASIM", "SAMA", "Normal", "Other"]
+        
+        # widgets for the product management section.
+        self.product_name_entry = None
+        self.category_combobox = None
+        self.type_combobox = None
+        self.memoryType_combobox = None
+        self.quantity_spinbox = None
+        self.price_spinbox = None
+        self.update_button = None
+        self.delete_button = None
+        self.cancel_button = None
+        self.Sales_button = None
+        
+        # widgets for the sales management section.
+        self.sales_name_entry  = None
+        self.sales_category_combobox = None
+        self.sales_type_entry  = None
+        self.sales_quantity_spinbox = None
+        self.sales_price_spinbox = None
+        self.sales_return_button = None
+        self.sales_cancel_button = None
+        
+        # Create a single search entry attribute
+        self.product_search_entry = None
+        self.sales_search_entry = None
+        
+        # Initialize Tables View
+        self.treeview1 = None
+        self.treeview2 = None
+        
+        # Data load initialization 
+        self.data_product = None
+        self.data_sales = None
+        
+        # Initialize a variable to keep track of the selected item in the Treeview1
+        self.selected_prodcut_item = None
+        
+        # Initialize a variable to keep track of the selected item in the Treeview2
+        self.selected_sales_item = None
+        
+        # RESET Product Flage
+        self.reset_product_flag = False
+        
+        # RESET Sales Flage
+        self.reset_sales_flag = False
         
         # Create the main frame that will contain all other widgets
+        # Create the main frame inside the root window
         self.main_frame = ttk.Frame(self.root)
-        self.main_frame.pack(fill="both", expand=True)  # Expand the frame to fit the window
+        self.main_frame.grid(row=0, column=0, sticky="nsew")
 
+        # Configure the grid of the root window to make the main frame expandable
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+
+        # Optionally, configure the grid inside the main frame if it contains child widgets
+        self.main_frame.grid_rowconfigure(0, weight=1)
+        self.main_frame.grid_columnconfigure(0, weight=1)
+        # Expand the frame to fit the window
+        
         # Create a notebook (tabbed interface) within the main frame
         self.create_notebook(self.main_frame)
+
+        # products ----------------------------------------------------------------
         
         # Add a title to the first tab (Product Page)
         self.page_title(self.tab1, "The Product Page")
@@ -42,12 +97,25 @@ class ExcelCrafterApp:
         self.add_product_widgets(self.tab1)
         
         # Create a Treeview widget (a table-like structure) in the first tab to display product data
-        self.create_treeview(self.tab1, path="products.xlsx", columns=["Name", "Category", "Type", "Quantity", "Price", "Date", "Time"])
+        self.create_treeview("treeview1", self.tab1, path="products.xlsx", columns=["Name", "Category", "Type", "Quantity", "Price", "Date", "Time"])
         
         # Create a search bar in the first tab to allow users to search through products
-        self.create_search(self.tab1, path="products.xlsx")
-
-
+        self.create_search(self.tab1, "product_search_entry", path="products.xlsx")
+        # products ----------------------------------------------------------------
+        
+        # sales ----------------------------------------------------------------
+        # Add a title to the first tab (Product Page)
+        self.page_title(self.tab2, "The Sales Page")
+        
+        # Create a Treeview widget (a table-like structure) in the first tab to display product data
+        self.create_treeview("treeview2", self.tab2, path="sales.xlsx", columns=["Name", "Category", "Type", "Quantity", "Price", "Date", "Time"])
+        
+        # Add product management widgets (input fields, buttons, etc.) to the first tab
+        self.add_sales_widgets(self.tab2)
+        
+        # Create a search bar in the first tab to allow users to search through products
+        self.create_search(self.tab2, "sales_search_entry", path="sales.xlsx")
+        # sales ----------------------------------------------------------------
     
 # Sales part ----------------------------------------------------------------------------
 
@@ -55,8 +123,8 @@ class ExcelCrafterApp:
         """
         Opens a new window for processing a sale of the selected product.
         """
-        # Get the selected item from the Treeview
-        selected_item = self.treeview.selection()
+        # Get the selected item from the Treeview1
+        selected_item = self.treeview1.selection()
         
         # If no item is selected, show an error message and exit the function
         if not selected_item:
@@ -65,7 +133,7 @@ class ExcelCrafterApp:
         
         # Try to retrieve the details of the selected product
         try:
-            product_details = self.treeview.item(selected_item, "values")
+            product_details = self.treeview1.item(selected_item, "values")
             # Unpack the product details
             product_name, category, product_type, available_quantity, price, date, time = product_details
             
@@ -219,13 +287,14 @@ class ExcelCrafterApp:
                 product_name, 
                 category_combobox, 
                 type_combobox, 
-                quantity_spinbox, 
+                quantity_spinbox,
+                price_spinbox,
                 sales_window
             )
         )
         sell_button.grid(row=6, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
 
-    def sell_product_from_window(self, product_name, category_combobox, type_combobox, quantity_spinbox, window):
+    def sell_product_from_window(self, product_name, category_combobox, type_combobox, quantity_spinbox, price, window):
         """
         Processes the sale of a product by updating the inventory and recording the sale.
         
@@ -248,66 +317,72 @@ class ExcelCrafterApp:
             messagebox.showerror("Error", f"An error occurred while processing the quantity: {e}")
             return
         
-        # Path to the products Excel file
-        path = "products.xlsx"
+        # Show confirmation dialog
+        response = messagebox.askyesno("Confirm Sell", "Are you sure you want to Sell this product?")
         
-        try:
-            # Load the Excel workbook and select the active sheet
-            workbook = openpyxl.load_workbook(path)
-            sheet = workbook.active
+        if  response:
+            
+            # Path to the products Excel file
+            path = "products.xlsx"
+            
+            try:
+                # Load the Excel workbook and select the active sheet
+                workbook = openpyxl.load_workbook(path)
+                sheet = workbook.active
 
-            # Iterate through the rows to find the matching product
-            for row in sheet.iter_rows(min_row=2, values_only=False):
-                if row[0].value == product_name:
-                    available_quantity = int(row[3].value)  # Current stock
-                    
-                    # Check if there is sufficient stock to fulfill the sale
-                    if quantity_sold > available_quantity:
-                        # If not enough stock, show a warning message
-                        messagebox.showwarning("Insufficient Stock", f"Only {available_quantity} units available.")
-                        return
-                    else:
-                        # Deduct the sold quantity from available stock
-                        row[3].value = available_quantity - quantity_sold
-                        # Prepare the updated data for the Treeview
-                        new_data = [row[i].value for i in range(len(row))]
+                # Iterate through the rows to find the matching product
+                for row in sheet.iter_rows(min_row=2, values_only=False):
+                    if row[0].value == product_name:
+                        available_quantity = int(row[3].value)  # Current stock
+                        
+                        # Check if there is sufficient stock to fulfill the sale
+                        if quantity_sold > available_quantity:
+                            # If not enough stock, show a warning message
+                            messagebox.showwarning("Insufficient Stock", f"Only {available_quantity} units available.")
+                            return
+                        else:
+                            # Deduct the sold quantity from available stock
+                            row[3].value = available_quantity - quantity_sold
+                            # Prepare the updated data for the Treeview
+                            new_data = [row[i].value for i in range(len(row))]
+                            break
+                else:
+                    # If the product was not found in the Excel sheet, show a warning
+                    messagebox.showwarning("Product Not Found", "The specified product was not found.")
+                    return
+
+                # Save the updated workbook back to the file
+                workbook.save(path)
+                
+                # Record the sale in the sales log
+                self.record_sale(
+                    product_name, 
+                    str(category_combobox.get()), 
+                    price.get(),
+                    str(type_combobox.get()), 
+                    quantity_sold
+                )
+                
+                # Close the sales window after successful sale
+                window.destroy()
+
+                # Notify the user of the successful sale
+                messagebox.showinfo("Success", "Product sold successfully!")
+                
+                # Update the Treeview1 to reflect the new quantity
+                for item in self.treeview1.get_children():
+                    if self.treeview1.item(item, "values")[0] == product_name:
+                        self.treeview1.item(item, values=new_data)
                         break
-            else:
-                # If the product was not found in the Excel sheet, show a warning
-                messagebox.showwarning("Product Not Found", "The specified product was not found.")
-                return
+                
+                # Reset any necessary variables or states
+                self.reset_product()
+                
+            except Exception as e:
+                # If any error occurs during the sale process, show an error message
+                messagebox.showerror("Error", f"An error occurred while selling the product: {e}")
 
-            # Save the updated workbook back to the file
-            workbook.save(path)
-            
-            # Record the sale in the sales log
-            self.record_sale(
-                product_name, 
-                str(category_combobox.get()), 
-                str(type_combobox.get()), 
-                quantity_sold
-            )
-            
-            # Close the sales window after successful sale
-            window.destroy()
-
-            # Notify the user of the successful sale
-            messagebox.showinfo("Success", "Product sold successfully!")
-            
-            # Update the Treeview to reflect the new quantity
-            for item in self.treeview.get_children():
-                if self.treeview.item(item, "values")[0] == product_name:
-                    self.treeview.item(item, values=new_data)
-                    break
-            
-            # Reset any necessary variables or states
-            self.reset()
-            
-        except Exception as e:
-            # If any error occurs during the sale process, show an error message
-            messagebox.showerror("Error", f"An error occurred while selling the product: {e}")
-
-    def record_sale(self, product_name, category, type, quantity_sold):
+    def record_sale(self, product_name, category, price, type, quantity_sold):
         """
         Records the sale details into the sales Excel file.
         
@@ -325,14 +400,14 @@ class ExcelCrafterApp:
         current_time = datetime.now().strftime("%H:%M:%S")
         
         # Create a list representing the sale record
-        sale_record = [product_name, category, type, quantity_sold, current_date, current_time]
+        sale_record = [product_name, category, type, quantity_sold, price, current_date, current_time]
 
         try:
             if not os.path.exists(sales_path):
                 # If the sales file doesn't exist, create it and add headers
                 workbook = openpyxl.Workbook()
                 sheet = workbook.active
-                headers = ["Product Name", "Category", "Type", "Quantity Sold", "Date", "Time"]
+                headers = ["Product Name", "Category", "Type", "Quantity Sold", "price", "Date", "Time"]
                 sheet.append(headers)
             else:
                 # If the sales file exists, load it
@@ -341,33 +416,62 @@ class ExcelCrafterApp:
 
             # Append the sale record to the sales sheet
             sheet.append(sale_record)
+            
             # Save the workbook
             workbook.save(sales_path)
+            
+            # Insert into Treeview
+            self.treeview2.insert('', tk.END, values=sale_record)
+            
         except Exception as e:
             # If there's an error recording the sale, show an error message
             messagebox.showerror("Error", f"An error occurred while recording the sale: {e}")
 
 # ---------------------------------------------------------------------------------------
 
-
-
-# GUI PART ------------------------------------------------------------------------------
+# GUI MAIN PART ------------------------------------------------------------------------------
 
     def create_notebook(self, frame):
         """Creates the notebook and adds tabs to it."""
+        # Create the notebook widget
         self.notebook = ttk.Notebook(frame)
-        self.notebook.pack(fill="both", expand=True, pady=10, padx=10)
+        self.notebook.grid(row=0, column=0, sticky="nsew")
 
-        # Create and add tabs
+        # Configure grid weights for the notebook to make it responsive
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+        
+        # Create the first tab (Products)
         self.tab1 = ttk.Frame(self.notebook)
         self.notebook.add(self.tab1, text="Products")
+        
+        # Configure grid weights for the tab1 to make it expandable
+        self.tab1.grid_rowconfigure(1, weight=1)
+        self.tab1.grid_columnconfigure(1, weight=1)
+        
+        # Create the second tab (Sales)
+        self.tab2 = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab2, text="Sales")
+        
+        # Configure grid weights for the tab2 to make it expandable
+        self.tab2.grid_rowconfigure(1, weight=1)
+        self.tab2.grid_columnconfigure(1, weight=1)
+        
+        # Add more tabs here if needed following the same pattern
 
 
     def add_product_widgets(self, frame):
         """Creates and adds the widgets for the product management section."""
         frame_widgets = ttk.LabelFrame(frame, text="Products")
         frame_widgets.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
+        
+        # Configure grid weights to make columns and rows responsive
+        frame_widgets.grid_columnconfigure(1, weight=1)  # Make the second column (with entry fields) expandable
+        for i in range(10):
+            frame_widgets.grid_rowconfigure(i, weight=1)  # Make each row expandable
 
+        
+        
         # Product Name
         name_label = ttk.Label(frame_widgets, text="Name:")
         name_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
@@ -415,53 +519,140 @@ class ExcelCrafterApp:
         self.insert_button = ttk.Button(frame_widgets, text="Insert", command=self.insert_product)
         self.insert_button.grid(row=6, column=0, padx=5, pady=5, sticky="nsew")
 
-        self.update_button = ttk.Button(frame_widgets, text="Update", command=self.update_product)
+        self.update_button = ttk.Button(frame_widgets, text="Update", command= lambda :self.update_product(treeview=self.treeview1))
         self.update_button.grid(row=6, column=1, padx=5, pady=5, sticky="nsew")
         self.update_button.config(state="disabled")
 
-        self.delete_button = ttk.Button(frame_widgets, text="Delete", command=self.delete_product)
+        self.delete_button = ttk.Button(frame_widgets, text="Delete", command=lambda: self.delete_product(treeview=self.treeview1))
         self.delete_button.grid(row=7, column=0, padx=5, pady=5, sticky="nsew")
         self.delete_button.config(state="disabled")
 
-        self.cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset)
+        self.cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset_product)
         self.cancel_button.grid(row=7, column=1, padx=5, pady=5, sticky="nsew")
         self.cancel_button.config(state="disabled")
 
         # Separator for better UI structure
         separator = ttk.Separator(frame_widgets)
         separator.grid(row=8, column=0, columnspan=2, padx=(20, 10), pady=10, sticky="ew")
-
+        
         # Sales Button
-        self.sales_button = ttk.Button(frame_widgets, text="Sale", command=self.open_sales_window)
-        self.sales_button.grid(row=9, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
-        self.sales_button.config(state="disable")
+        self.Sales_button = ttk.Button(frame_widgets, text="Sale", command=self.open_sales_window)
+        self.Sales_button.grid(row=9, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
+        self.Sales_button.config(state="disable")
+   
+        
+    def add_sales_widgets(self, frame):
+        """Creates and adds the widgets for the product management section."""
+        frame_widgets = ttk.LabelFrame(frame, text="Sales")
+        frame_widgets.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
+        
+        # Configure grid weights to make columns and rows responsive
+        frame_widgets.grid_columnconfigure(1, weight=1)  # Make the second column (with entry fields) expandable
+        for i in range(9):
+            frame_widgets.grid_rowconfigure(i, weight=1)  # Make each row expandable
+            
+        # Product Name
+        name_label = ttk.Label(frame_widgets, text="Name:")
+        name_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.sales_name_entry = ttk.Entry(frame_widgets)
+        self.sales_name_entry.bind("<FocusIn>", lambda e: self.clear_entry(self.product_name_entry, "Name"))
+        self.sales_name_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.sales_name_entry.config(state="disabled")
 
-        # Configure grid weights for better resizing behavior
-        frame_widgets.columnconfigure(0, weight=1)
-        frame_widgets.columnconfigure(1, weight=1)
+        # Category
+        category_label = ttk.Label(frame_widgets, text="Category:")
+        category_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.sales_category_combobox = ttk.Combobox(frame_widgets, values=self.combo_list_ProductCategory, state="readonly")
+        self.sales_category_combobox.current(0)  # Default to the first category
+        self.sales_category_combobox.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        self.sales_category_combobox.bind("<<ComboboxSelected>>", self.on_category_selected)  # Bind category selection event
+        self.sales_category_combobox.config(state="disabled")
 
+        # Type
+        type_label = ttk.Label(frame_widgets, text="Type:")
+        type_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.sales_type_entry = ttk.Entry(frame_widgets)
+        self.sales_type_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
+        self.sales_type_entry.config(state="disabled")
 
-    def create_treeview(self, frame, path, columns):
+        # Quantity
+        quantity_label = ttk.Label(frame_widgets, text="Quantity:")
+        quantity_label.grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.sales_quantity_spinbox = ttk.Spinbox(frame_widgets, from_=1, to=1000)
+        self.sales_quantity_spinbox.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
+        self.sales_quantity_spinbox.config(state="disabled")
+
+        # Price
+        price_label = ttk.Label(frame_widgets, text="Price:")
+        price_label.grid(row=4, column=0, padx=5, pady=5, sticky="w")
+        self.sales_price_spinbox = ttk.Spinbox(frame_widgets, from_=0.0, to=10000.0, increment=50)
+        self.sales_price_spinbox.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
+        self.sales_price_spinbox.config(state="disabled")
+
+        # Buttons for product operations
+        self.sales_cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset_sales)
+        self.sales_cancel_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
+        self.sales_cancel_button.config(state="disabled")
+        
+        self.sales_return_button = ttk.Button(frame_widgets, text="Return", command=self.return_product)
+        self.sales_return_button.grid(row=5, column=1, padx=5, pady=5, sticky="nsew")
+        self.sales_return_button.config(state="disabled")
+
+        # Separator for better UI structure
+        separator = ttk.Separator(frame_widgets)
+        separator.grid(row=6, column=0, columnspan=2, padx=(20, 10), pady=10, sticky="ew")
+        
+        # Create a DateEntry widget start
+        date_start_label = ttk.Label(frame_widgets, text="Start Date")
+        date_start_label.grid(row=7, column=0, padx=5, pady=5, sticky="w")
+        date_start = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
+        date_start.grid(row=7, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Create a DateEntry widget end
+        date_end_label = ttk.Label(frame_widgets, text="End Date")
+        date_end_label.grid(row=8, column=0, padx=5, pady=5, sticky="w")
+        date_end = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
+        date_end.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
+        
+
+    def create_treeview(self, treeview_attr, frame, path, columns):
         """Creates the treeview widget for displaying product data."""
+        # Create a frame to hold the treeview and scrollbar
         tree_frame = ttk.Frame(frame)
-        tree_frame.grid(row=1, column=2, padx=20, pady=10, sticky="nsew")
+        tree_frame.grid(row=1, column=1, padx=20, pady=10, sticky="nsew")
+        
+        # Configure grid weights for the tree_frame to make it expandable
+        
+        # Create a vertical scrollbar
         tree_scroll = ttk.Scrollbar(tree_frame)
-        tree_scroll.pack(side="right", fill="y")
+        tree_scroll.grid(row=0, column=1, sticky="ns")
 
-        # Configure treeview
-        self.treeview = ttk.Treeview(tree_frame, show="headings", yscrollcommand=tree_scroll.set, columns=columns, height=13)
+        # Create the Treeview widget
+        treeview = ttk.Treeview(tree_frame, show="headings", yscrollcommand=tree_scroll.set, columns=columns, height=1)
+        
+        # Configure Treeview columns and headings
         for col in columns:
-            self.treeview.column(col, width=100, anchor="center")
-            self.treeview.heading(col, text=col, command=lambda _col=col: self.sort_treeview(_col, False))
+            treeview.column(col, minwidth=100, anchor="center")
+            treeview.heading(col, text=col, command=lambda _col=col: self.sort_treeview(_col, False, treeview=treeview))
 
-        self.treeview.pack(fill="both", expand=True)
-        tree_scroll.config(command=self.treeview.yview)
+        # Place Treeview in the grid and make it expand to fill available space
+        treeview.grid(row=0, column=0, pady=10, sticky="nsew")
+
+        # Configure the Scrollbar to control the Treeview's vertical scrolling
+        tree_scroll.config(command=treeview.yview)
 
         # Bind selection event to Treeview
-        self.treeview.bind("<<TreeviewSelect>>", self.on_item_selected)
+        treeview.bind("<<TreeviewSelect>>", lambda event: self.on_item_selected(event, treeview=treeview))
+        
+        # Store the Treeview object to be accessible from other parts of the class
+        setattr(self, treeview_attr, treeview)
 
-        # Load data into the treeview
-        self.load_data(path=path)
+        # Load data into the Treeview
+        self.load_data(treeview=treeview, path=path)
+        
+        # Configure grid weights for the treeview and scrollbar to allow responsiveness
+        tree_frame.grid_rowconfigure(0, weight=1)
+        tree_frame.grid_columnconfigure(0, weight=1)
 
 
     def page_title(self, frame, title):
@@ -479,103 +670,154 @@ class ExcelCrafterApp:
         title_frame.columnconfigure(0, weight=1)
 
 
-    def create_search(self, frame, path):
+    def create_search(self, frame, search_entry_name, path):
+            
         """Creates the search bar for filtering products in the treeview."""
         search_frame = ttk.Frame(frame)
         search_frame.grid(row=0, column=0, padx=20, pady=10, sticky="ew")
 
         search_label = ttk.Label(search_frame, text="Search:")
         search_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        
+        # Create a single search entry attribute, regardless of the path
+        search_entry = ttk.Entry(search_frame)
+        search_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        # Store the search_entry object to be accessible from other parts of the class
+        setattr(self, search_entry_name, search_entry)
 
-        self.search_entry = ttk.Entry(search_frame)
-        self.search_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
-        self.search_entry.bind("<KeyRelease>", self.search_data)  # Bind search function to key release events
+        # Bind the appropriate treeview depending on the path
+        if path == "products.xlsx":
+            self.product_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview1))
+        else:
+            self.sales_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview2))
 
+        
         # Configure grid weight to ensure proper resizing
         search_frame.columnconfigure(1, weight=1)
 
-    # GUI PART ------------------------------------------------------------------------------
+# GUI PART ------------------------------------------------------------------------------
 
 
 # FUN PART ------------------------------------------------------------------------------
 
-# TABLE FUNCTIONALTY 
+# TREEVIEW FUNCTIONALITY
 
-    def sort_treeview(self, col, reverse):
+    def sort_treeview(self, col, reverse, treeview):
         """Sorts the Treeview column when the heading is clicked."""
         try:
-            data = [(self.treeview.set(k, col), k) for k in self.treeview.get_children('')]
+            data = [(treeview.set(k, col), k) for k in treeview.get_children('')]
             data.sort(reverse=reverse)
             for index, (val, k) in enumerate(data):
-                self.treeview.move(k, '', index)
-            self.treeview.heading(col, command=lambda: self.sort_treeview(col, not reverse))
+                treeview.move(k, '', index)
+            treeview.heading(col, command=lambda: self.sort_treeview(col, not reverse, treeview=treeview))
         except Exception as e:
             print(f"Error sorting column {col}: {e}")
     
-    def on_item_selected(self, event):
-        selected_item = self.treeview.selection()  # Get the selected item
+    def on_item_selected(self, event, treeview):
+        selected_item = treeview.selection()  # Get the selected item
         if selected_item:
-            # Retrieve the values of the selected item
-            item_values = self.treeview.item(selected_item, "values")
-            
-            # Populate the input fields with the selected item's data
-            self.product_name_entry.config(state="normal")
-            self.product_name_entry.delete(0, "end")
-            self.product_name_entry.insert(0, item_values[0])  # Name
-            self.product_name_entry.config(state="disabled")
-            
-            self.category_combobox.set(item_values[1])  # Category
-            
-            if  item_values[1] == "Flash USB" or item_values[1] == "Memory Card":
-                self.memoryType_combobox.set(item_values[2])  # Type
-                self.memoryType_combobox.config(state="normal")
-                self.type_combobox.config(state="disable")
+            if  treeview == self.treeview1:
+                self.reset_product_flag = True
+                # Retrieve the values of the selected item
+                item_values = treeview.item(selected_item, "values")
+                
+                # Populate the input fields with the selected item's data
+                self.product_name_entry.config(state="normal")
+                self.product_name_entry.delete(0, "end")
+                self.product_name_entry.insert(0, item_values[0])  # Name
+                self.product_name_entry.config(state="disabled")
+                
+                self.category_combobox.set(item_values[1])  # Category
+                
+                if  item_values[1] == "Flash USB" or item_values[1] == "Memory Card":
+                    self.memoryType_combobox.set(item_values[2])  # Type
+                    self.memoryType_combobox.config(state="normal")
+                    self.type_combobox.config(state="disable")
+                else:
+                    self.type_combobox.set(item_values[2])  # Type
+                    self.type_combobox.config(state="normal")
+                    self.memoryType_combobox.config(state="disable")
+                
+                self.quantity_spinbox.delete(0, "end")
+                self.quantity_spinbox.insert(0, item_values[3])  # Quantity
+                
+                self.price_spinbox.delete(0, "end")
+                self.price_spinbox.insert(0, item_values[4])  # Price
+                
+                # Disable the Insert button and enable the Update and Delete buttons
+                self.insert_button.config(state="disabled")
+                self.update_button.config(state="normal")
+                self.delete_button.config(state="normal")
+                self.cancel_button.config(state="normal")
+                self.Sales_button.config(state="normal")
+                
+                # Store the selected item's ID for future updates
+                self.selected_prodcut_item = item_values[0]
             else:
-                self.type_combobox.set(item_values[2])  # Type
-                self.type_combobox.config(state="normal")
-                self.memoryType_combobox.config(state="disable")
-            
-            self.quantity_spinbox.delete(0, "end")
-            self.quantity_spinbox.insert(0, item_values[3])  # Quantity
-            
-            self.price_spinbox.delete(0, "end")
-            self.price_spinbox.insert(0, item_values[4])  # Price
-            
-            # Disable the Insert button and enable the Update and Delete buttons
-            self.insert_button.config(state="disabled")
-            self.update_button.config(state="normal")
-            self.delete_button.config(state="normal")
-            self.canceled_button.config(state="normal")
-            self.Sales_button.config(state="normal")
-            
-            # Store the selected item's ID for future updates
-            self.selected_item = item_values[0]
+                self.reset_sales_flag = True
+                # Retrieve the values of the selected item
+                item_values = treeview.item(selected_item, "values")
+                self.sales_name_entry.config(state="normal")
+                self.sales_name_entry.delete(0, "end")
+                self.sales_name_entry.insert(0, item_values[0])  # Name
+                self.sales_name_entry.config(state="disabled")
+                
+                self.sales_category_combobox.config(state="normal")
+                self.sales_category_combobox.set(item_values[1])
+                self.sales_category_combobox.config(state="disabled")
+                
+                self.sales_type_entry.config(state="normal")
+                self.sales_type_entry.delete(0,  "end")
+                self.sales_type_entry.insert(0, item_values[2])
+                self.sales_type_entry.config(state="disabled")
+                
+                self.sales_quantity_spinbox.config(state="normal")
+                self.sales_quantity_spinbox.delete(0, "end")
+                self.sales_quantity_spinbox.insert(0, item_values[3])
+                
+                self.sales_price_spinbox.config(state="normal")
+                self.sales_price_spinbox.delete(0, "end")
+                self.sales_price_spinbox.insert(0, item_values[4])
+                self.sales_price_spinbox.config(state="disabled")
+
+                
+                self.sales_return_button.config(state="normal")
+                self.sales_cancel_button.config(state="normal")
+                
+                # Store the selected item's ID 
+                self.selected_sales_item = item_values[0]
     
-    def load_data(self, path):
+    def load_data(self, treeview, path):
         """Loads data from the Excel file and inserts it into the treeview."""
         try:
             workbook = openpyxl.load_workbook(path)
             sheet = workbook.active
+            
+            if path == "products.xlsx":
+                self.data_product = list(sheet.values)  # Store all data for searching
+                all_data = self.data_product
+            else:
+                self.data_sales = list(sheet.values)  # Store all data for searching
+                all_data = self.data_sales
 
-            self.all_data = list(sheet.values)  # Store all data for searching
+            
+            
 
-            headers = self.all_data[0]
-            self.treeview["columns"] = headers
+            headers = all_data[0]
+            treeview["columns"] = headers
             for col in headers:
-                self.treeview.heading(col, text=col, command=lambda _col=col: self.sort_treeview(_col, False))
-                self.treeview.column(col, width=100, anchor="center")
+                treeview.heading(col, text=col, command=lambda _col=col: self.sort_treeview(_col, False, treeview=treeview))
+                treeview.column(col, width=100, anchor="center")
 
-            self.treeview.delete(*self.treeview.get_children())  # Clear existing data
+            treeview.delete(*treeview.get_children())  # Clear existing data
 
-            for value_tuple in self.all_data[1:]:
-                self.treeview.insert('', tk.END, values=value_tuple)
+            for value_tuple in all_data[1:]:
+                treeview.insert('', tk.END, values=value_tuple)
         except FileNotFoundError:
             # If the file doesn't exist, create it with headers
             self.create_excel_file(path)
         except Exception as e:
             print(f"Error loading data: {e}")
-
-# TABLE FUNCTIONALTY 
 
     def create_excel_file(self, path):
         """Creates a new Excel file with headers."""
@@ -585,10 +827,13 @@ class ExcelCrafterApp:
             headers = ["Name", "Category", "Type", "Quantity", "Price", "Date", "Time"]
             sheet.append(headers)
             workbook.save(path)
-            self.all_data = [headers]
+            if  path == "products.xlsx":
+                self.data_product = [headers]
+            else:
+                self.data_sales = [headers]
         except Exception as e:
             print(f"Error creating Excel file: {e}")
-    # "Flash USB", "Earphone", "Memory Card"
+    # "Flash USB", "Memory Card"
     def on_category_selected(self, event):
         selected_category = self.category_combobox.get()
         if selected_category == "Flash USB" or selected_category == "Memory Card":  # Specify the category you want to check
@@ -601,11 +846,11 @@ class ExcelCrafterApp:
     def clear_entry(self, entry, default_text):
         if entry.get() == default_text:
             entry.delete(0, "end")
- 
-# UPDATE FUN
+
+# PRODUCT UPDATE FUNCTIONALITY
     
-    def update_product(self):
-        if not self.selected_item:
+    def update_product(self, treeview):
+        if not self.selected_prodcut_item:
             messagebox.showwarning("Select Item", "Please select an item to update.")
             return
 
@@ -625,9 +870,9 @@ class ExcelCrafterApp:
             new_data = [name, category, product_type, quantity, price, current_date, current_time]
             
             # Update Treeview
-            for item in self.treeview.get_children():
-                if self.treeview.item(item, "values")[0] == self.selected_item:
-                    self.treeview.item(item, values=new_data)
+            for item in treeview.get_children():
+                if treeview.item(item, "values")[0] == self.selected_prodcut_item:
+                    treeview.item(item, values=new_data)
                     break
             
             # Update Excel file
@@ -648,14 +893,14 @@ class ExcelCrafterApp:
 
                 workbook.save(path)
                 messagebox.showinfo("Success", "Product updated successfully!")
-                self.reset()
+                self.reset_product()
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred while updating the product: {e}")
   
-# DELETE FUN
+# PRODUCT DELETE FUNCTIONALITY
     
-    def delete_product(self):
-        if not self.selected_item:
+    def delete_product(self, treeview):
+        if not self.selected_prodcut_item:
             messagebox.showwarning("Select Item", "Please select an item to delete.")
             return
         
@@ -664,9 +909,9 @@ class ExcelCrafterApp:
         
         if response:
             # Remove from Treeview
-            for item in self.treeview.get_children():
-                if self.treeview.item(item, "values")[0] == self.selected_item:
-                    self.treeview.delete(item)
+            for item in treeview.get_children():
+                if treeview.item(item, "values")[0] == self.selected_prodcut_item:
+                    treeview.delete(item)
                     break
 
             # Remove from Excel file
@@ -676,17 +921,17 @@ class ExcelCrafterApp:
                 sheet = workbook.active
 
                 for i, row in enumerate(sheet.iter_rows(values_only=False), start=1):
-                    if row[0].value == self.selected_item:
+                    if row[0].value == self.selected_prodcut_item:
                         sheet.delete_rows(i, 1)
                         break
 
                 workbook.save(path)
                 messagebox.showinfo("Success", "Product deleted successfully!")
-                self.reset()
+                self.reset_product()
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred while deleting the product: {e}")
 
-# INSRTION FUNCTIONALTY
+# PRODUCT INSERTION FUNCTIONALITY
 
     def insert_product(self):
         validated_data = self.validate_inputs()
@@ -697,7 +942,7 @@ class ExcelCrafterApp:
         current_date = datetime.now().strftime("%Y-%m-%d")
         current_time = datetime.now().strftime("%H:%M:%S")
         
-        unique_id = str(uuid.uuid4())
+        # unique_id = str(uuid.uuid4())
         row_values = [name, category, product_type, quantity, price, current_date, current_time]
         
         # Insert in a separate thread to keep UI responsive
@@ -723,13 +968,13 @@ class ExcelCrafterApp:
             workbook.save(path)
             
             # Insert into Treeview
-            self.treeview.insert('', tk.END, values=row_values)
+            self.treeview1.insert('', tk.END, values=row_values)
             
             # Update the stored data
-            self.all_data.append(row_values)
+            self.data_product.append(row_values)
             
             # Clear the input fields
-            self.reset()
+            self.reset_product(treeview=self.treeview1)
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while inserting the product: {e}")
     
@@ -753,31 +998,46 @@ class ExcelCrafterApp:
             messagebox.showerror("Error", "Ensure all fields are entered correctly!")
             return None
 
-# INSRTION FUNCTIONALTY 
-    
-    def search_data(self, event=None):
-        search_term = self.search_entry.get().lower()
-        self.treeview.delete(*self.treeview.get_children())
+# RETURN PRODUCT FUNCTIONALITY
 
-        for value_tuple in self.all_data[1:]:
+    def return_product(self):
+        pass
+
+# SEARCH FUNCTIONALITY 
+    
+    def search_data(self, event, search_entry, treeview):
+        if self.reset_product_flag:
+            self.reset_product()
+        search_term = search_entry.get().lower()
+        treeview.delete(*treeview.get_children())
+        
+        if treeview == self.treeview1:
+            all_data = self.data_product
+        else:
+            all_data = self.data_sales
+
+        for value_tuple in all_data[1:]:
             if any(search_term in str(cell).lower() for cell in value_tuple):
-                self.treeview.insert('', tk.END, values=value_tuple)
+                treeview.insert('', tk.END, values=value_tuple)
                 
-    def reset(self):
-        if self.selected_item:
-            for item in self.treeview.get_children():
-                if self.treeview.item(item, "values")[0] == self.selected_item:
-                    self.treeview.selection_remove(item)
+# RESET FUNCTIONALITY
+
+    def reset_product(self):
+        if self.selected_prodcut_item:
+            for item in self.treeview1.get_children():
+                if self.treeview1.item(item, "values")[0] == self.selected_prodcut_item:
+                    self.treeview1.selection_remove(item)
                     break
-        self.selected_item = None
+        self.selected_prodcut_item = None
+        
+        # Reset on the product part 
         self.insert_button.config(state="normal")
         self.type_combobox.config(state="disabled")
         self.memoryType_combobox.config(state="disabled")
         self.update_button.config(state="disabled")
         self.delete_button.config(state="disabled")
-        self.canceled_button.config(state="disabled")
+        self.cancel_button.config(state="disabled")
         self.Sales_button.config(state="disabled")
-        
         # Reset input fields
         self.product_name_entry.config(state="normal")
         self.product_name_entry.delete(0, "end")
@@ -785,7 +1045,43 @@ class ExcelCrafterApp:
         self.type_combobox.set(self.combo_list_ProductType[0])
         self.quantity_spinbox.delete(0, "end")
         self.price_spinbox.delete(0, "end")
+        
+        #  Reset on the sales part 
+        self.reset_product_flag = False
 
+    def reset_sales(self):
+        if self.selected_sales_item:
+            for item in self.treeview2.get_children():
+                if self.treeview2.item(item, "values")[0] == self.selected_sales_item:
+                    self.treeview2.selection_remove(item)
+                    break
+        self.selected_sales_item = None
+        
+        # Retrieve the values of the selected item
+        self.sales_name_entry.config(state="normal")
+        self.sales_name_entry.delete(0, "end")
+        self.sales_name_entry.config(state="disabled")
+                
+        self.sales_category_combobox.set(self.combo_list_ProductCategory[0])
+        self.sales_category_combobox.config(state="disabled")
+                
+        self.sales_type_entry.config(state="normal")
+        self.sales_type_entry.delete(0,  "end")
+        self.sales_type_entry.config(state="disabled")
+                
+        self.sales_quantity_spinbox.delete(0, "end")
+        self.sales_quantity_spinbox.config(state="disabled")
+                
+        self.sales_price_spinbox.config(state="normal")
+        self.sales_price_spinbox.delete(0, "end")
+        self.sales_price_spinbox.config(state="disabled")
+    
+        self.sales_return_button.config(state="disabled")
+        self.sales_cancel_button.config(state="disabled") 
+        
+        #  Reset on the sales part 
+        self.reset_sales_flag = False
+                
 #FUN PART ------------------------------------------------------------------------------
 
 if __name__ == "__main__":
