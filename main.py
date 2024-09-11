@@ -477,8 +477,6 @@ class ExcelCrafterApp:
         elif selected_tab == 1:  # If Tab 2 is selected
             self.reset_product()
 
-
-
     def add_product_widgets(self, frame):
         """Creates and adds the widgets for the product management section."""
         frame_widgets = ttk.LabelFrame(frame, text="Products")
@@ -558,8 +556,7 @@ class ExcelCrafterApp:
         self.Sales_button = ttk.Button(frame_widgets, text="Sale", command=self.open_sales_window)
         self.Sales_button.grid(row=9, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
         self.Sales_button.config(state="disable")
-   
-        
+       
     def add_sales_widgets(self, frame):
         """Creates and adds the widgets for the product management section."""
         frame_widgets = ttk.LabelFrame(frame, text="Sales")
