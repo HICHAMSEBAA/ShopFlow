@@ -466,7 +466,17 @@ class ExcelCrafterApp:
         self.tab2.grid_rowconfigure(1, weight=1)
         self.tab2.grid_columnconfigure(1, weight=1)
         
-        # Add more tabs here if needed following the same pattern
+        # Bind the <<NotebookTabChanged>> event
+        self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_selected)
+        
+    def on_tab_selected(self, event):
+        selected_tab = self.notebook.index(self.notebook.select())  # Get the index of the selected tab
+
+        if selected_tab == 0:  # If Tab 1 is selected
+            self.reset_cancel()
+        elif selected_tab == 1:  # If Tab 2 is selected
+            self.reset_product()
+
 
 
     def add_product_widgets(self, frame):
@@ -614,15 +624,21 @@ class ExcelCrafterApp:
         # Create a DateEntry widget start
         date_start_label = ttk.Label(frame_widgets, text="Start Date")
         date_start_label.grid(row=7, column=0, padx=5, pady=5, sticky="w")
-        date_start = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
-        date_start.grid(row=7, column=1, padx=5, pady=5, sticky="ew")
+        self.date_start = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
+        self.date_start.grid(row=7, column=1, padx=5, pady=5, sticky="ew")
         
         # Create a DateEntry widget end
         date_end_label = ttk.Label(frame_widgets, text="End Date")
         date_end_label.grid(row=8, column=0, padx=5, pady=5, sticky="w")
-        date_end = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
-        date_end.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
+        self.date_end = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
+        self.date_end.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
         
+        # 
+        calculate_sales_button = ttk.Button(frame_widgets, text="Total", command=self.calculate_sales)
+        calculate_sales_button.grid(row=9, column=0, padx=5, pady=5, sticky="nsew")
+        self.calculate_sales_entry = ttk.Entry(frame_widgets)
+        self.calculate_sales_entry.grid(row=9, column=1, padx=5, pady=5, sticky="ew")
+        self.calculate_sales_entry.config(state="disabled")
 
     def create_treeview(self, treeview_attr, frame, path, columns):
         """Creates the treeview widget for displaying product data."""
@@ -982,7 +998,7 @@ class ExcelCrafterApp:
             self.data_product.append(row_values)
             
             # Clear the input fields
-            self.reset_product(treeview=self.treeview1)
+            self.reset_product()
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while inserting the product: {e}")
     
@@ -1106,7 +1122,6 @@ class ExcelCrafterApp:
 
         # Find and update the row in sales.xlsx
         for i, row in enumerate(sales_sheet.iter_rows(values_only=False), start=1):
-            print(f"Row {i}: {row[0].value}, Quantity: {row[4].value}")  # Debugging output
             if str(row[0].value) == str(self.selected_sales_item[0]):  # Assuming column 0 is the sales item ID
                 if row[4].value is None or not isinstance(row[4].value, (int, float)):
                     raise ValueError("Invalid or missing quantity in the sales record.")
@@ -1153,6 +1168,23 @@ class ExcelCrafterApp:
         for value_tuple in all_data[1:]:
             if any(search_term in str(cell).lower() for cell in value_tuple):
                 treeview.insert('', tk.END, values=value_tuple)
+
+# # GET Data From The Files 
+#     def all_data(self, path):
+#         try:
+#             workbook = openpyxl.load_workbook(path)
+#             sheet = workbook.active
+            
+#             if path == "products.xlsx":
+#                 self.data_product = list(sheet.values)  # Store all data for searching
+#             else:
+#                 self.data_sales = list(sheet.values)  # Store all data for searching
+#         except FileNotFoundError:
+#             # If the file doesn't exist, create it with headers
+#             self.create_excel_file(path)
+#         except Exception as e:
+#             print(f"Error loading data: {e}") 
+           
                 
 # RESET FUNCTIONALITY
 
@@ -1251,7 +1283,8 @@ class ExcelCrafterApp:
         self.sales_return_button.config(state="disabled")
         self.sales_cancel_button.config(state="disabled")
 
-        
+
+# Update tables for the return fun ..     
     def update_treeview2(self):
         for item in self.treeview2.get_children():
             if self.treeview2.item(item, "values")[0] == self.selected_sales_item[0]:
@@ -1270,7 +1303,31 @@ class ExcelCrafterApp:
                 self.treeview1.selection_remove(item)
                 break
 
-                
+    # Function to calculate total sales between two dates
+    def calculate_sales(self):
+        file_path = 'sales.xlsx'  
+        wb = openpyxl.load_workbook(file_path)
+        sheet = wb.active
+        total_sales_amount = 0
+        start_date_ = self.date_start.get_date().strftime('%Y-%m-%d')
+        end_date_ = self.date_end.get_date().strftime('%Y-%m-%d')
+        start_date = datetime.strptime(start_date_, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date_, '%Y-%m-%d')
+
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            date_str = row[6]  # Assuming 'Date' is in the 7th column (index 6)
+            if isinstance(date_str, str):
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+
+                if start_date <= date_obj <= end_date:
+                    quantity = float(row[4])  # Quantity in the 5th column (index 4)
+                    price = float(row[5])     # Price in the 6th column (index 5)
+                    total_sales_amount += quantity * price
+        self.calculate_sales_entry.config(state="normal")
+        self.calculate_sales_entry.delete(0, "end")
+        self.calculate_sales_entry.insert(0, string=f"{total_sales_amount} DA")
+        self.calculate_sales_entry.config(state="disabled")
+                    
 #FUN PART ------------------------------------------------------------------------------
 
 if __name__ == "__main__":
