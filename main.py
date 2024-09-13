@@ -904,7 +904,7 @@ class ExcelCrafterApp:
                 
                 # Store the selected item's ID for future updates
                 self.selected_prodcut_item = item_values[0]
-            else:
+            elif treeview == self.treeview2:
                 self.reset_sales_flag = True
                 # Retrieve the values of the selected item
                 item_values = treeview.item(selected_item, "values")
@@ -937,7 +937,37 @@ class ExcelCrafterApp:
                 
                 # Store the selected item's ID 
                 self.selected_sales_item = [item_values[0],  item_values[1], item_values[4]]
-    
+            else:
+                self.reset_beverage_flag = True
+                # Retrieve the values of the selected item
+                item_values = treeview.item(selected_item, "values")
+                
+                # Populate the input fields with the selected item's data
+                self.beverage_name_entry.config(state="normal")
+                self.beverage_name_entry.delete(0, "end")
+                self.beverage_name_entry.insert(0, item_values[1])  # Name
+                self.beverage_name_entry.config(state="disabled")
+
+                self.beverage_category_combobox.set(item_values[2])  # Category
+                
+                self.beverage_brand_combobox.set(item_values[3])  # Type
+                self.beverage_brand_combobox.config(state="normal")
+                
+                self.beverage_quantity_spinbox.delete(0, "end")
+                self.beverage_quantity_spinbox.insert(0, item_values[4])  # Quantity
+                
+                self.beverage_price_spinbox.delete(0, "end")
+                self.beverage_price_spinbox.insert(0, item_values[5])  # Price
+                
+                # Disable the Insert button and enable the Update and Delete buttons
+                self.beverage_save_button.config(state="disabled")
+                self.beverage_update_button.config(state="normal")
+                self.beverage_delete_button.config(state="normal")
+                self.beverage_cancel_button.config(state="normal")
+                self.beverage_Sales_button.config(state="normal")
+                
+                self.selected_beverage_item = item_values[0]
+                
     def load_data(self, treeview, path):
         """Loads data from the Excel file and inserts it into the treeview."""
         try:
@@ -1216,68 +1246,6 @@ class ExcelCrafterApp:
             return None
 
 # RETURN PRODUCT FUNCTIONALITY
-
-    # def return_product(self):
-    #     if not self.selected_sales_item:
-    #         messagebox.showwarning("Select Item", "Please select an item to return.")
-    #         return
-        
-    #     # Show confirmation dialog
-    #     response = messagebox.askyesno("Confirm Delete", "Are you sure you want to return this product?")
-        
-    #     self.return_sales_flag = True
-        
-    #     if response:
-    #         # File paths
-    #         sales_path = "sales.xlsx"
-    #         productes_path = "products.xlsx"
-            
-    #         try:
-    #             self.return_quantity = int(self.sales_quantity_spinbox.get())
-    #         except ValueError:
-    #             messagebox.showerror("Error", "Please enter a valid quantity.")
-    #             return
-            
-    #         try:
-    #             # Load workbooks
-    #             sales_workbook = openpyxl.load_workbook(sales_path)
-    #             sales_sheet = sales_workbook.active
-    #             productes_workbook = openpyxl.load_workbook(productes_path)
-    #             productes_sheet = productes_workbook.active
-
-    #             # Remove from sales.xlsx
-    #             for i, row in enumerate(sales_sheet.iter_rows(values_only=False), start=1):
-    #                 if row[0].value == self.selected_sales_item[0]:
-                        
-    #                     if row[4].value is None:
-    #                         messagebox.showerror("Error", "Quantity is missing in the sales record.")
-    #                         return
-                        
-    #                     if isinstance(row[4].value, (int, float)):
-    #                         if row[4].value > self.return_quantity:
-    #                             row[4].value = row[4].value - self.return_quantity
-    #                         elif row[4].value == self.return_quantity:
-    #                             sales_sheet.delete_rows(i, 1)
-    #                         else:
-    #                             messagebox.showerror("Error", "Return quantity is greater than available quantity.")
-    #                             return
-    #                     else:
-    #                         messagebox.showerror("Error", "Invalid data type for quantity.")
-    #                     break
-    #             sales_workbook.save(sales_path)
-
-    #             # Update products.xlsx
-    #             for row in productes_sheet.iter_rows(values_only=False):
-    #                 if row[0].value == self.selected_sales_item[1]:
-    #                     row[3].value = row[3].value + int(self.sales_quantity_spinbox.get())
-    #                     break
-    #             productes_workbook.save(productes_path)
-
-    #             messagebox.showinfo("Success", "Product return successful!")
-    #             self.reset_sales()
-
-    #         except Exception as e:
-    #             messagebox.showerror("Error", f"An error occurred while returning the product: {e}")
     
     def return_product(self):
         if not self.selected_sales_item:
