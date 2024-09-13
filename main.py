@@ -535,7 +535,7 @@ class ExcelCrafterApp:
         selected_tab = self.notebook.index(self.notebook.select())  # Get the index of the selected tab
 
         if selected_tab == 0:  # If Tab 1 is selected
-            self.reset_cancel()
+            self.reset_product_cancel()
         elif selected_tab == 1:  # If Tab 2 is selected
             self.reset_product()
 
@@ -668,7 +668,7 @@ class ExcelCrafterApp:
         self.sales_price_spinbox.config(state="disabled")
 
         # Buttons for product operations
-        self.sales_cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset_cancel)
+        self.sales_cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset_product_cancel)
         self.sales_cancel_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
         self.sales_cancel_button.config(state="disabled")
         
@@ -729,7 +729,6 @@ class ExcelCrafterApp:
         self.beverage_brand_combobox = ttk.Combobox(frame_widgets, values=self.combo_list_beveragebrand, state="readonly")
         self.beverage_brand_combobox.current(0)
         self.beverage_brand_combobox.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
-        self.beverage_brand_combobox.config(state="disabled")
 
         # Quantity
         quantity_label = ttk.Label(frame_widgets, text="Quantity:")
@@ -755,7 +754,7 @@ class ExcelCrafterApp:
         self.beverage_delete_button.grid(row=6, column=0, padx=5, pady=5, sticky="nsew")
         self.beverage_delete_button.config(state="disabled")
         # , command=self.reset_product
-        self.beverage_cancel_button = ttk.Button(frame_widgets, text="Cancel")
+        self.beverage_cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset_beverage)
         self.beverage_cancel_button.grid(row=6, column=1, padx=5, pady=5, sticky="nsew")
         self.beverage_cancel_button.config(state="disabled")
 
@@ -1329,22 +1328,6 @@ class ExcelCrafterApp:
         for value_tuple in all_data[1:]:
             if any(search_term in str(cell).lower() for cell in value_tuple):
                 treeview.insert('', tk.END, values=value_tuple)
-
-# # GET Data From The Files 
-#     def all_data(self, path):
-#         try:
-#             workbook = openpyxl.load_workbook(path)
-#             sheet = workbook.active
-            
-#             if path == "products.xlsx":
-#                 self.data_product = list(sheet.values)  # Store all data for searching
-#             else:
-#                 self.data_sales = list(sheet.values)  # Store all data for searching
-#         except FileNotFoundError:
-#             # If the file doesn't exist, create it with headers
-#             self.create_excel_file(path)
-#         except Exception as e:
-#             print(f"Error loading data: {e}") 
            
                 
 # RESET FUNCTIONALITY
@@ -1379,14 +1362,13 @@ class ExcelCrafterApp:
     def reset_beverage(self):
         if self.selected_beverage_item:
             for item in self.treeview3.get_children():
-                if self.treeview3.item(item, "values")[0] == self.selected_prodcut_item:
+                if self.treeview3.item(item, "values")[0] == self.selected_beverage_item:
                     self.treeview3.selection_remove(item)
                     break
         self.selected_beverage_item = None
         
         # Reset on the product part 
         self.beverage_save_button.config(state="normal")
-        self.beverage_brand_combobox.config(state="disabled")
         self.beverage_update_button.config(state="disabled")
         self.beverage_delete_button.config(state="disabled")
         self.beverage_cancel_button.config(state="disabled")
@@ -1402,7 +1384,7 @@ class ExcelCrafterApp:
         
         self.reset_beverage_flag = False
 
-    def reset_cancel(self):
+    def reset_product_cancel(self):
         if self.selected_sales_item:
             # Remove Selection item from Treeview2
             for item in self.treeview2.get_children():
@@ -1410,9 +1392,31 @@ class ExcelCrafterApp:
                     self.treeview2.selection_remove(item)
                     break
             
-            self.reset_entry()
+            self.reset_product_entry()
             
-            
+    def reset_product_entry(self):
+        # Reset entry fields
+        self.sales_name_entry.config(state="normal")
+        self.sales_name_entry.delete(0, "end")
+        self.sales_name_entry.config(state="disabled")
+        
+        self.sales_category_combobox.set(self.combo_list_ProductCategory[0])
+        self.sales_category_combobox.config(state="disabled")
+
+        self.sales_type_entry.config(state="normal")
+        self.sales_type_entry.delete(0, "end")
+        self.sales_type_entry.config(state="disabled")
+
+        self.sales_quantity_spinbox.delete(0, "end")
+        self.sales_quantity_spinbox.config(state="disabled")
+
+        self.sales_price_spinbox.config(state="normal")
+        self.sales_price_spinbox.delete(0, "end")
+        self.sales_price_spinbox.config(state="disabled")
+
+        self.sales_return_button.config(state="disabled")
+        self.sales_cancel_button.config(state="disabled")
+              
     def reset_sales(self):
         if self.selected_sales_item:
             try:
@@ -1441,35 +1445,10 @@ class ExcelCrafterApp:
         self.selected_sales_item.clear()
 
         # Reset entry fields
-        self.reset_entry()
+        self.reset_product_entry()
 
         self.reset_sales_flag = False
         
-    
-    def reset_entry(self):
-        # Reset entry fields
-        self.sales_name_entry.config(state="normal")
-        self.sales_name_entry.delete(0, "end")
-        self.sales_name_entry.config(state="disabled")
-        
-        self.sales_category_combobox.set(self.combo_list_ProductCategory[0])
-        self.sales_category_combobox.config(state="disabled")
-
-        self.sales_type_entry.config(state="normal")
-        self.sales_type_entry.delete(0, "end")
-        self.sales_type_entry.config(state="disabled")
-
-        self.sales_quantity_spinbox.delete(0, "end")
-        self.sales_quantity_spinbox.config(state="disabled")
-
-        self.sales_price_spinbox.config(state="normal")
-        self.sales_price_spinbox.delete(0, "end")
-        self.sales_price_spinbox.config(state="disabled")
-
-        self.sales_return_button.config(state="disabled")
-        self.sales_cancel_button.config(state="disabled")
-
-
 # Update tables for the return fun ..     
     def update_treeview2(self):
         for item in self.treeview2.get_children():
