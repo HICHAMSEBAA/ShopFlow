@@ -93,11 +93,18 @@ class ExcelCrafterApp:
         # Initialize a variable to keep track of the selected item in the Treeview1
         self.selected_prodcut_item = None
         
+        # Initialize a variable to keep track of the selected item in the Treeview1
+        self.selected_beverage_item = None
+        
+        
         # Initialize a variable to keep track of the selected item in the Treeview2
         self.selected_sales_item = []
         
         # RESET Product Flage
         self.reset_product_flag = False
+        
+        # RESET Beveratge Flage
+        self.reset_beverage_flag = False
         
         # RESET Sales Flage
         self.reset_sales_flag = False
@@ -737,7 +744,7 @@ class ExcelCrafterApp:
         self.beverage_price_spinbox.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
 
         # Buttons for product operations , command=self.insert_product
-        self.beverage_save_button = ttk.Button(frame_widgets, text="Insert")
+        self.beverage_save_button = ttk.Button(frame_widgets, text="Insert", command=self.Insert_beverage)
         self.beverage_save_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
         # , command= lambda :self.update_product(treeview=self.treeview1)
         self.beverage_update_button = ttk.Button(frame_widgets, text="Update")
@@ -1118,7 +1125,7 @@ class ExcelCrafterApp:
             self.treeview1.insert('', tk.END, values=row_values)
             
             # Update the stored data
-            self.data_product.append(row_values)
+            self.data_beverage.append(row_values)
             
             # Clear the input fields
             self.reset_product()
@@ -1141,6 +1148,69 @@ class ExcelCrafterApp:
             price = float(self.price_spinbox.get())
             
             return name, category, product_type, quantity, price
+        except ValueError:
+            messagebox.showerror("Error", "Ensure all fields are entered correctly!")
+            return None
+        
+# BEVERAGE INSERTION FUNCTIONALITY
+
+    def Insert_beverage(self):
+        validated_data = self.validate_beverage_input()
+        if not validated_data:
+            return
+        
+        id, name, category, brand, quantity, price = validated_data
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        current_time = datetime.now().strftime("%H:%M:%S")
+        row_values = [id, name, category, brand, quantity, price, current_date, current_time]
+        
+        # Insert in a separate thread to keep UI responsive
+        threading.Thread(target=self._insert_beverage, args=(row_values,)).start()
+    
+    def _insert_beverage(self, row_values):
+        path = "beverage.xlsx"
+        try:
+            if not os.path.exists(path):
+                self.create_excel_file(path)
+            
+            workbook = openpyxl.load_workbook(path)
+            sheet = workbook.active
+            
+
+            # Append the new product
+            sheet.append(row_values)
+            workbook.save(path)
+            
+            # Insert into Treeview
+            self.treeview3.insert('', tk.END, values=row_values)
+            
+            # Update the stored data
+            self.data_product.append(row_values)
+            
+            # Clear the input fields
+            self.reset_beverage()
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while inserting the product: {e}")
+    
+    def validate_beverage_input(self):
+        try:
+            name = self.beverage_name_entry.get().strip()
+            if not name:
+                messagebox.showerror("Error", "Please enter a valid Product Name!")
+                return None
+
+            category = self.beverage_category_combobox.get()
+            brand = self.beverage_brand_combobox.get()
+            quantity = int(self.beverage_quantity_spinbox.get())
+            price = float(self.beverage_price_spinbox.get())
+            
+            # Generate a random UUID
+            unique_id = uuid.uuid4()
+
+            # Convert to string if needed
+            unique_id_str = str(unique_id)
+                
+            return unique_id_str, name, category, brand, quantity, price
         except ValueError:
             messagebox.showerror("Error", "Ensure all fields are entered correctly!")
             return None
@@ -1338,6 +1408,31 @@ class ExcelCrafterApp:
         #  Reset on the sales part 
         self.reset_product_flag = False
 
+    def reset_beverage(self):
+        if self.selected_beverage_item:
+            for item in self.treeview3.get_children():
+                if self.treeview3.item(item, "values")[0] == self.selected_prodcut_item:
+                    self.treeview3.selection_remove(item)
+                    break
+        self.selected_beverage_item = None
+        
+        # Reset on the product part 
+        self.beverage_save_button.config(state="normal")
+        self.beverage_brand_combobox.config(state="disabled")
+        self.beverage_update_button.config(state="disabled")
+        self.beverage_delete_button.config(state="disabled")
+        self.beverage_cancel_button.config(state="disabled")
+        self.beverage_Sales_button.config(state="disabled")
+        
+        # Reset input fields
+        self.beverage_name_entry.config(state="normal")
+        self.beverage_name_entry.delete(0, "end")
+        self.beverage_category_combobox.set(self.combo_list_ProductCategory[0])
+        self.beverage_brand_combobox.set(self.combo_list_ProductType[0])
+        self.beverage_quantity_spinbox.delete(0, "end")
+        self.beverage_price_spinbox.delete(0, "end")
+        
+        self.reset_beverage_flag = False
 
     def reset_cancel(self):
         if self.selected_sales_item:
