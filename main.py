@@ -72,13 +72,14 @@ class ExcelCrafterApp:
         self.beverage_cancel_button = None
         self.beverage_Sales_button = None
         
-        # widgets for the sales beverages windoes 
+        # widgets for the beverage sales management section.
         self.beverage_sales_name_entry  = None
         self.beverage_sales_category_combobox = None
-        self.beverage_sales_brand_combobox  = None
+        self.beverage_sales_brand_entry  = None
         self.beverage_sales_quantity_spinbox = None
         self.beverage_sales_price_spinbox = None
-        self.beverage_sales_Sales_button = None
+        self.beverage_sales_return_button = None
+        self.beverage_sales_cancel_button = None
         
 
         
@@ -86,17 +87,20 @@ class ExcelCrafterApp:
         self.product_search_entry = None
         self.sales_search_entry = None
         self.beverage_search_entry = None
+        self.beverage_sales_search_entry = None
         
         
         # Initialize Tables View
         self.treeview1 = None
         self.treeview2 = None
         self.treeview3 = None
+        self.treeview3 = None
         
         # Data load initialization 
         self.data_product = None
         self.data_sales = None
         self.data_beverage = None
+        self.data_beverage_sales = None
         
         # Initialize a variable to keep track of the selected item in the Treeview1
         self.selected_prodcut_item = None
@@ -108,6 +112,9 @@ class ExcelCrafterApp:
         # Initialize a variable to keep track of the selected item in the Treeview2
         self.selected_sales_item = []
         
+        # Initialize a variable to keep track of the selected item in the Treeview2
+        self.selected_beverage_sales_item = []
+        
         # RESET Product Flage
         self.reset_product_flag = False
         
@@ -117,8 +124,14 @@ class ExcelCrafterApp:
         # RESET Sales Flage
         self.reset_sales_flag = False
         
+        # RESET Beverage Sales Flage
+        self.reset_beverage_sales_flag = False
+        
         # RETURN Sales Flage
         self.return_sales_flag = False
+        
+        # RETURN Beverage Sales Flage
+        self.return_beverage_sales_flag = False
         
         # Create the main frame that will contain all other widgets
         # Create the main frame inside the root window
@@ -177,10 +190,22 @@ class ExcelCrafterApp:
         
         # Create a search bar in the first tab to allow users to search through products
         self.create_search(self.tab3, "beverage_search_entry", path="beverage.xlsx")
-        
         # beverage section ----------------------------------------------------------------
         
-
+        # sales Beverage ----------------------------------------------------------------
+        # Add a title to the first tab (Product Page)
+        self.page_title(self.tab4, "The Beverage Sales Page")
+        
+        # Create a Treeview widget (a table-like structure) in the first tab to display product data
+        self.create_treeview("treeview4", self.tab4, path="beverage_sales.xlsx", columns=["id", "Name", "Category", "Brand", "Quantity", "Price", "Date", "Time"])
+        
+        # Add product management widgets (input fields, buttons, etc.) to the first tab
+        self.add_beverage_sales_widgets(self.tab4)
+        
+        # Create a search bar in the first tab to allow users to search through products
+        self.create_search(self.tab4, "beverage_sales_search_entry", path="beverage_sales.xlsx")
+        # sales -------------------------------------------------------------------------
+        
 # Sales products part ----------------------------------------------------------------------------
 
     def open_sales_window(self):
@@ -787,19 +812,30 @@ class ExcelCrafterApp:
         
         # Create the second tab (Sales)
         self.tab2 = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab2, text="Sales")
+        self.notebook.add(self.tab2, text="Products Sales")
         
         # Configure grid weights for the tab2 to make it expandable
         self.tab2.grid_rowconfigure(1, weight=1)
         self.tab2.grid_columnconfigure(1, weight=1)
         
-        # Create the second tab (Sales)
+        # Create the second tab 
         self.tab3 = ttk.Frame(self.notebook)
         self.notebook.add(self.tab3, text="Beverege")
         
-        # Configure grid weights for the tab2 to make it expandable
+        # Configure grid weights for the tab3 to make it expandable
         self.tab3.grid_rowconfigure(1, weight=1)
         self.tab3.grid_columnconfigure(1, weight=1)
+        
+        
+        # Create the second tab (Beverage Sales)
+        self.tab4 = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab4, text="Beverage Sales")
+        
+        # Configure grid weights for the tab4 to make it expandable
+        self.tab4.grid_rowconfigure(1, weight=1)
+        self.tab4.grid_columnconfigure(1, weight=1)
+        
+        
         
         # Bind the <<NotebookTabChanged>> event
         self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_selected)
@@ -1039,6 +1075,85 @@ class ExcelCrafterApp:
         self.beverage_Sales_button = ttk.Button(frame_widgets, text="Sale", command=self.open_beverage_sales_window)
         self.beverage_Sales_button.grid(row=8, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
         self.beverage_Sales_button.config(state="disable")
+
+    def add_beverage_sales_widgets(self, frame):
+        """Creates and adds the widgets for the product management section."""
+        frame_widgets = ttk.LabelFrame(frame, text="Sales")
+        frame_widgets.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
+        
+        # Configure grid weights to make columns and rows responsive
+        frame_widgets.grid_columnconfigure(1, weight=1)  # Make the second column (with entry fields) expandable
+        for i in range(9):
+            frame_widgets.grid_rowconfigure(i, weight=1)  # Make each row expandable
+            
+        # Product Name
+        name_label = ttk.Label(frame_widgets, text="Name:")
+        name_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.beverage_sales_name_entry = ttk.Entry(frame_widgets)
+        self.beverage_sales_name_entry.bind("<FocusIn>", lambda e: self.clear_entry(self.product_name_entry, "Name"))
+        self.beverage_sales_name_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.beverage_sales_name_entry.config(state="disabled")
+
+        # Category
+        category_label = ttk.Label(frame_widgets, text="Category:")
+        category_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.beverage_sales_category_combobox = ttk.Combobox(frame_widgets, values=self.combo_list_beverageCategory, state="readonly")
+        self.beverage_sales_category_combobox.current(0)  # Default to the first category
+        self.beverage_sales_category_combobox.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        self.beverage_sales_category_combobox.config(state="disabled")
+
+        # brand
+        brand_label = ttk.Label(frame_widgets, text="Brand:")
+        brand_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.beverage_sales_brand_entry = ttk.Entry(frame_widgets)
+        self.beverage_sales_brand_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
+        self.beverage_sales_brand_entry.config(state="disabled")
+
+        # Quantity
+        quantity_label = ttk.Label(frame_widgets, text="Quantity:")
+        quantity_label.grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.beverage_sales_quantity_spinbox = ttk.Spinbox(frame_widgets, from_=1, to=1000)
+        self.beverage_sales_quantity_spinbox.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
+        self.beverage_sales_quantity_spinbox.config(state="disabled")
+
+        # Price
+        price_label = ttk.Label(frame_widgets, text="Price:")
+        price_label.grid(row=4, column=0, padx=5, pady=5, sticky="w")
+        self.beverage_sales_price_spinbox = ttk.Spinbox(frame_widgets, from_=0.0, to=10000.0, increment=50)
+        self.beverage_sales_price_spinbox.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
+        self.beverage_sales_price_spinbox.config(state="disabled")
+
+        # Buttons for product operations , command=self.reset_sales_cancel
+        self.beverage_sales_cancel_button = ttk.Button(frame_widgets, text="Cancel")
+        self.beverage_sales_cancel_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
+        self.beverage_sales_cancel_button.config(state="disabled")
+        #, command=self.return_product
+        self.beverage_sales_return_button = ttk.Button(frame_widgets, text="Return")
+        self.beverage_sales_return_button.grid(row=5, column=1, padx=5, pady=5, sticky="nsew")
+        self.beverage_sales_return_button.config(state="disabled")
+
+        # Separator for better UI structure
+        separator = ttk.Separator(frame_widgets)
+        separator.grid(row=6, column=0, columnspan=2, padx=(20, 10), pady=10, sticky="ew")
+        
+        # Create a DateEntry widget start
+        date_start_label = ttk.Label(frame_widgets, text="Start Date")
+        date_start_label.grid(row=7, column=0, padx=5, pady=5, sticky="w")
+        self.date_start = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
+        self.date_start.grid(row=7, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Create a DateEntry widget end
+        date_end_label = ttk.Label(frame_widgets, text="End Date")
+        date_end_label.grid(row=8, column=0, padx=5, pady=5, sticky="w")
+        self.date_end = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
+        self.date_end.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
+        
+        # , command=self.calculate_sales
+        calculate_sales_button = ttk.Button(frame_widgets, text="Total")
+        calculate_sales_button.grid(row=9, column=0, padx=5, pady=5, sticky="nsew")
+        self.calculate_sales_entry = ttk.Entry(frame_widgets)
+        self.calculate_sales_entry.grid(row=9, column=1, padx=5, pady=5, sticky="ew")
+        self.calculate_sales_entry.config(state="disabled")
 
     def create_treeview(self, treeview_attr, frame, path, columns):
         """Creates the treeview widget for displaying product data."""
