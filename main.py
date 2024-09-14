@@ -746,7 +746,7 @@ class ExcelCrafterApp:
         self.beverage_save_button = ttk.Button(frame_widgets, text="Insert", command=self.Insert_beverage)
         self.beverage_save_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
         # , command= lambda :self.update_product(treeview=self.treeview1)
-        self.beverage_update_button = ttk.Button(frame_widgets, text="Update")
+        self.beverage_update_button = ttk.Button(frame_widgets, text="Update", command=lambda: self.update_beverage(treeview=self.treeview3))
         self.beverage_update_button.grid(row=5, column=1, padx=5, pady=5, sticky="nsew")
         self.beverage_update_button.config(state="disabled")
         # , command=lambda: self.delete_product(treeview=self.treeview1)
@@ -1078,76 +1078,57 @@ class ExcelCrafterApp:
                 self.reset_product()
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred while updating the product: {e}")
-  
-# PRODUCT DELETE FUNCTIONALITY
-    
-    def delete_product(self, treeview):
-        
-        if not self.selected_prodcut_item:
-            messagebox.showwarning("Select Item", "Please select an item to delete.")
+
+# BEVERAGE UPDATE FUNCTIONALITY
+
+    def update_beverage(self, treeview):
+        if not self.selected_beverage_item:
+            messagebox.showwarning("Select Beverage", "Please select a Beverage to update.")
             return
-        
+
         # Show confirmation dialog
-        response = messagebox.askyesno("Confirm Delete", "Are you sure you want to delete this product?")
+        response = messagebox.askyesno("Confirm Update", "Are you sure you want to update this Beverage?")
         
         if response:
-            # Remove from Treeview
-            for item in treeview.get_children():
-                if treeview.item(item, "values")[0] == self.selected_prodcut_item:
-                    treeview.delete(item)
-                    break
+            validated_data = self.validate_beverage_input()
+            if not validated_data:
+                return
 
-            # Remove from Excel file
-            path = "products.xlsx"
-            try:
-                workbook = openpyxl.load_workbook(path)
-                sheet = workbook.active
-
-                for i, row in enumerate(sheet.iter_rows(values_only=False), start=1):
-                    if row[0].value == self.selected_prodcut_item:
-                        sheet.delete_rows(i, 1)
-                        break
-
-                workbook.save(path)
-                messagebox.showinfo("Success", "Product deleted successfully!")
-                self.reset_product()
-            except Exception as e:
-                messagebox.showerror("Error", f"An error occurred while deleting the product: {e}")
-
-# BEVERAGE DELETE FUNCTIONALITY 
-
-    def delete_beverage(self, treeview):
-        
-        if not self.selected_beverage_item:
-            messagebox.showwarning("Select Beverage", "Please select an beverage to delete.")
-            return
-        
-        # Show confirmation dialog
-        response = messagebox.askyesno("Confirm Delete", "Are you sure you want to delete this Beverage ?")
-        
-        if  response:
-            # Remove from Treeview
+            name, category, brand, quantity, price = validated_data
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            current_time = datetime.now().strftime("%H:%M:%S")
+            
+            # Prepare new data
+            new_data = [self.selected_beverage_item, name, category, brand, quantity, price, current_date, current_time]
+            
+            # Update Treeview
             for item in treeview.get_children():
                 if treeview.item(item, "values")[0] == self.selected_beverage_item:
-                    treeview.delete(item)
+                    treeview.item(item, values=new_data)
                     break
-
-            # Remove from Excel file
+            
+            # Update Excel file
             path = "beverage.xlsx"
             try:
                 workbook = openpyxl.load_workbook(path)
                 sheet = workbook.active
 
-                for i, row in enumerate(sheet.iter_rows(values_only=False), start=1):
-                    if row[0].value == self.selected_beverage_item:
-                        sheet.delete_rows(i, 1)
+                for row in sheet.iter_rows(values_only=False):
+                    if  row[0].value == self.selected_beverage_item: 
+                        row[2].value = category
+                        row[3].value = brand
+                        row[4].value = quantity
+                        row[5].value = price
+                        row[6].value = current_date
+                        row[7].value = current_time
                         break
 
                 workbook.save(path)
-                messagebox.showinfo("Success", "Beverage deleted successfully!")
+                messagebox.showinfo("Success", "Beverage updated successfully!")
                 self.reset_beverage()
             except Exception as e:
-                messagebox.showerror("Error", f"An error occurred while deleting the Beverage: {e}")
+                messagebox.showerror("Error", f"An error occurred while updating the Beverage: {e}")
+    
 
 # DELETE FUNCTIONALITY 
 
@@ -1262,10 +1243,11 @@ class ExcelCrafterApp:
         if not validated_data:
             return
         
-        id, name, category, brand, quantity, price = validated_data
+        name, category, brand, quantity, price = validated_data
         current_date = datetime.now().strftime("%Y-%m-%d")
         current_time = datetime.now().strftime("%H:%M:%S")
-        row_values = [id, name, category, brand, quantity, price, current_date, current_time]
+        unique_id = str(uuid.uuid4())
+        row_values = [unique_id, name, category, brand, quantity, price, current_date, current_time]
         
         # Insert in a separate thread to keep UI responsive
         threading.Thread(target=self._insert_beverage, args=(row_values,)).start()
@@ -1307,13 +1289,7 @@ class ExcelCrafterApp:
             quantity = int(self.beverage_quantity_spinbox.get())
             price = float(self.beverage_price_spinbox.get())
             
-            # Generate a random UUID
-            unique_id = uuid.uuid4()
-
-            # Convert to string if needed
-            unique_id_str = str(unique_id)
-                
-            return unique_id_str, name, category, brand, quantity, price
+            return name, category, brand, quantity, price
         except ValueError:
             messagebox.showerror("Error", "Ensure all fields are entered correctly!")
             return None
