@@ -602,7 +602,7 @@ class ExcelCrafterApp:
         self.update_button.grid(row=6, column=1, padx=5, pady=5, sticky="nsew")
         self.update_button.config(state="disabled")
 
-        self.delete_button = ttk.Button(frame_widgets, text="Delete", command=lambda: self.delete_product(treeview=self.treeview1))
+        self.delete_button = ttk.Button(frame_widgets, text="Delete", command=lambda: self.delete_item(treeview = self.treeview1, selected_item = self.selected_prodcut_item, file_path = "products.xlsx", item_type = "Product"))
         self.delete_button.grid(row=7, column=0, padx=5, pady=5, sticky="nsew")
         self.delete_button.config(state="disabled")
 
@@ -750,7 +750,7 @@ class ExcelCrafterApp:
         self.beverage_update_button.grid(row=5, column=1, padx=5, pady=5, sticky="nsew")
         self.beverage_update_button.config(state="disabled")
         # , command=lambda: self.delete_product(treeview=self.treeview1)
-        self.beverage_delete_button = ttk.Button(frame_widgets, text="Delete", command=lambda: self.delete_beverage(treeview=self.treeview3))
+        self.beverage_delete_button = ttk.Button(frame_widgets, text="Delete", command=lambda: self.delete_item(treeview = self.treeview3, selected_item=self.selected_beverage_item, file_path="beverage.xlsx", item_type="Beverage"))
         self.beverage_delete_button.grid(row=6, column=0, padx=5, pady=5, sticky="nsew")
         self.beverage_delete_button.config(state="disabled")
         # , command=self.reset_product
@@ -1148,6 +1148,45 @@ class ExcelCrafterApp:
                 self.reset_beverage()
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred while deleting the Beverage: {e}")
+
+# DELETE FUNCTIONALITY 
+
+    def delete_item(self, treeview, selected_item, file_path, item_type):
+        if not selected_item:
+            messagebox.showwarning(f"Select {item_type}", f"Please select a {item_type.lower()} to delete.")
+            return
+
+        # Show confirmation dialog
+        response = messagebox.askyesno(f"Confirm Delete", f"Are you sure you want to delete this {item_type.lower()}?")
+        
+        if response:
+            # Remove from Treeview
+            for item in treeview.get_children():
+                if treeview.item(item, "values")[0] == selected_item:
+                    treeview.delete(item)
+                    break
+
+            # Remove from Excel file
+            try:
+                workbook = openpyxl.load_workbook(file_path)
+                sheet = workbook.active
+
+                for i, row in enumerate(sheet.iter_rows(values_only=False), start=1):
+                    if row[0].value == selected_item:
+                        sheet.delete_rows(i, 1)
+                        break
+
+                workbook.save(file_path)
+                messagebox.showinfo("Success", f"{item_type} deleted successfully!")
+                
+                # Call the appropriate reset method
+                if item_type.lower() == "product":
+                    self.reset_product()
+                elif item_type.lower() == "beverage":
+                    self.reset_beverage()
+
+            except Exception as e:
+                messagebox.showerror("Error", f"An error occurred while deleting the {item_type.lower()}: {e}")
 
 # PRODUCT INSERTION FUNCTIONALITY
 
