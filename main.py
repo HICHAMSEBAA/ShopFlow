@@ -94,7 +94,7 @@ class ExcelCrafterApp:
         self.treeview1 = None
         self.treeview2 = None
         self.treeview3 = None
-        self.treeview3 = None
+        self.treeview4 = None
         
         # Data load initialization 
         self.data_product = None
@@ -1226,15 +1226,17 @@ class ExcelCrafterApp:
         # Bind the appropriate treeview depending on the path
         if path == "products.xlsx":
             self.product_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview1))
-        else:
+        elif path == "sales.xlsx":
             self.sales_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview2))
-
-        
+        # elif path == "beverage.xlsx":
+        #     self.sales_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview3))
+        # elif path == "beverage_sales.xlsx":
+        #     self.sales_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview4))
+            
         # Configure grid weight to ensure proper resizing
         search_frame.columnconfigure(1, weight=1)
 
 # GUI PART ------------------------------------------------------------------------------
-
 
 # FUN PART ------------------------------------------------------------------------------
 
@@ -1364,9 +1366,15 @@ class ExcelCrafterApp:
             if path == "products.xlsx":
                 self.data_product = list(sheet.values)  # Store all data for searching
                 all_data = self.data_product
-            else:
+            elif path == "sales.xlsx":
                 self.data_sales = list(sheet.values)  # Store all data for searching
                 all_data = self.data_sales
+            elif path == "beverage.xlsx":
+                self.data_beverage = list(sheet.values)  # Store all data for searching
+                all_data = self.data_beverage
+            elif path == "beverage_sales.xlsx":
+                self.data_beverage_sales = list(sheet.values)  # Store all data for searching
+                all_data = self.data_beverage_sales
             headers = all_data[0]
             treeview["columns"] = headers
             for col in headers:
@@ -1397,9 +1405,11 @@ class ExcelCrafterApp:
             elif path == "sales.xlsx":
                 sheet.append(headers_sales)
                 self.data_sales = [headers_sales]
-            else:
+            elif path == "beverage.xlsx":
                 sheet.append(headers_beverage)
-                self.data_sales = [headers_beverage]
+                self.data_beverage = [headers_beverage]
+            else:
+                return
             workbook.save(path)
         except Exception as e:
             print(f"Error creating Excel file: {e}")
@@ -1671,7 +1681,7 @@ class ExcelCrafterApp:
             self.treeview1.insert('', tk.END, values=row_values)
             
             # Update the stored data
-            self.data_beverage.append(row_values)
+            self.data_product.append(row_values)
             
             # Clear the input fields
             self.reset_product()
@@ -1732,7 +1742,7 @@ class ExcelCrafterApp:
             self.treeview3.insert('', tk.END, values=row_values)
             
             # Update the stored data
-            self.data_product.append(row_values)
+            self.data_beverage.append(row_values)
             
             # Clear the input fields
             self.reset_beverage()
@@ -1830,17 +1840,23 @@ class ExcelCrafterApp:
         if self.reset_product_flag:
             self.reset_product()
         search_term = search_entry.get().lower()
+        print( search_entry == self.sales_search_entry)
+        print( search_entry == self.product_search_entry)
+        print(search_term)
         treeview.delete(*treeview.get_children())
         
         if treeview == self.treeview1:
             all_data = self.data_product
-        else:
+        elif treeview == self.treeview2:
             all_data = self.data_sales
+        else:
+            return
 
         for value_tuple in all_data[1:]:
             if any(search_term in str(cell).lower() for cell in value_tuple):
                 treeview.insert('', tk.END, values=value_tuple)
-           
+              
+              
                 
 # RESET FUNCTIONALITY
 
