@@ -535,7 +535,7 @@ class ExcelCrafterApp:
         selected_tab = self.notebook.index(self.notebook.select())  # Get the index of the selected tab
 
         if selected_tab == 0:  # If Tab 1 is selected
-            self.reset_product_cancel()
+            self.reset_sales_cancel()
         elif selected_tab == 1:  # If Tab 2 is selected
             self.reset_product()
 
@@ -668,7 +668,7 @@ class ExcelCrafterApp:
         self.sales_price_spinbox.config(state="disabled")
 
         # Buttons for product operations
-        self.sales_cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset_product_cancel)
+        self.sales_cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset_sales_cancel)
         self.sales_cancel_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
         self.sales_cancel_button.config(state="disabled")
         
@@ -750,7 +750,7 @@ class ExcelCrafterApp:
         self.beverage_update_button.grid(row=5, column=1, padx=5, pady=5, sticky="nsew")
         self.beverage_update_button.config(state="disabled")
         # , command=lambda: self.delete_product(treeview=self.treeview1)
-        self.beverage_delete_button = ttk.Button(frame_widgets, text="Delete")
+        self.beverage_delete_button = ttk.Button(frame_widgets, text="Delete", command=lambda: self.delete_beverage(treeview=self.treeview3))
         self.beverage_delete_button.grid(row=6, column=0, padx=5, pady=5, sticky="nsew")
         self.beverage_delete_button.config(state="disabled")
         # , command=self.reset_product
@@ -1114,6 +1114,41 @@ class ExcelCrafterApp:
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred while deleting the product: {e}")
 
+# BEVERAGE DELETE FUNCTIONALITY 
+
+    def delete_beverage(self, treeview):
+        
+        if not self.selected_beverage_item:
+            messagebox.showwarning("Select Beverage", "Please select an beverage to delete.")
+            return
+        
+        # Show confirmation dialog
+        response = messagebox.askyesno("Confirm Delete", "Are you sure you want to delete this Beverage ?")
+        
+        if  response:
+            # Remove from Treeview
+            for item in treeview.get_children():
+                if treeview.item(item, "values")[0] == self.selected_beverage_item:
+                    treeview.delete(item)
+                    break
+
+            # Remove from Excel file
+            path = "beverage.xlsx"
+            try:
+                workbook = openpyxl.load_workbook(path)
+                sheet = workbook.active
+
+                for i, row in enumerate(sheet.iter_rows(values_only=False), start=1):
+                    if row[0].value == self.selected_beverage_item:
+                        sheet.delete_rows(i, 1)
+                        break
+
+                workbook.save(path)
+                messagebox.showinfo("Success", "Beverage deleted successfully!")
+                self.reset_beverage()
+            except Exception as e:
+                messagebox.showerror("Error", f"An error occurred while deleting the Beverage: {e}")
+
 # PRODUCT INSERTION FUNCTIONALITY
 
     def insert_product(self):
@@ -1384,7 +1419,7 @@ class ExcelCrafterApp:
         
         self.reset_beverage_flag = False
 
-    def reset_product_cancel(self):
+    def reset_sales_cancel(self):
         if self.selected_sales_item:
             # Remove Selection item from Treeview2
             for item in self.treeview2.get_children():
@@ -1392,9 +1427,9 @@ class ExcelCrafterApp:
                     self.treeview2.selection_remove(item)
                     break
             
-            self.reset_product_entry()
+            self.reset_sales_entry()
             
-    def reset_product_entry(self):
+    def reset_sales_entry(self):
         # Reset entry fields
         self.sales_name_entry.config(state="normal")
         self.sales_name_entry.delete(0, "end")
@@ -1445,7 +1480,7 @@ class ExcelCrafterApp:
         self.selected_sales_item.clear()
 
         # Reset entry fields
-        self.reset_product_entry()
+        self.reset_sales_entry()
 
         self.reset_sales_flag = False
         
