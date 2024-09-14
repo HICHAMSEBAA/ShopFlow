@@ -1229,9 +1229,9 @@ class ExcelCrafterApp:
         elif path == "sales.xlsx":
             self.sales_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview2))
         elif path == "beverage.xlsx":
-             self.beverage_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview3))
-        # elif path == "beverage_sales.xlsx":
-        #     self.sales_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview4))
+            self.beverage_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview3))
+        elif path == "beverage_sales.xlsx":
+            self.beverage_sales_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview4))
             
         # Configure grid weight to ensure proper resizing
         search_frame.columnconfigure(1, weight=1)
@@ -1326,7 +1326,7 @@ class ExcelCrafterApp:
                 
                 # Store the selected item's ID 
                 self.selected_sales_item = [item_values[0],  item_values[1], item_values[4]]
-            else:
+            elif treeview == self.treeview3:
                 self.reset_beverage_flag = True
                 # Retrieve the values of the selected item
                 item_values = treeview.item(selected_item, "values")
@@ -1356,6 +1356,40 @@ class ExcelCrafterApp:
                 self.beverage_Sales_button.config(state="normal")
                 
                 self.selected_beverage_item = item_values[0]
+            elif treeview == self.treeview4:
+                self.reset_beverage_sales_flag = True
+                # Retrieve the values of the selected item
+                item_values = treeview.item(selected_item, "values")
+                self.beverage_sales_name_entry.config(state="normal")
+                self.beverage_sales_name_entry.delete(0, "end")
+                self.beverage_sales_name_entry.insert(0, item_values[1])  # Name
+                self.beverage_sales_name_entry.config(state="disabled")
+                
+                self.beverage_sales_category_combobox.config(state="normal")
+                self.beverage_sales_category_combobox.set(item_values[2])
+                self.beverage_sales_category_combobox.config(state="disabled")
+                
+                self.beverage_sales_brand_entry.config(state="normal")
+                self.beverage_sales_brand_entry.delete(0,  "end")
+                self.beverage_sales_brand_entry.insert(0, item_values[3])
+                self.beverage_sales_brand_entry.config(state="disabled")
+                
+                self.beverage_sales_quantity_spinbox.config(state="normal")
+                self.beverage_sales_quantity_spinbox.delete(0, "end")
+                self.beverage_sales_quantity_spinbox.insert(0, item_values[4])
+                
+                self.beverage_sales_price_spinbox.config(state="normal")
+                self.beverage_sales_price_spinbox.delete(0, "end")
+                self.beverage_sales_price_spinbox.insert(0, item_values[5])
+                self.beverage_sales_price_spinbox.config(state="disabled")
+
+                
+                self.beverage_sales_return_button.config(state="normal")
+                self.beverage_sales_cancel_button.config(state="normal")
+                
+                # Store the selected item's ID 
+                self.selected_beverage_sales_item = [item_values[0],  item_values[1], item_values[4]]
+                
                 
     def load_data(self, treeview, path):
         """Loads data from the Excel file and inserts it into the treeview."""
@@ -1848,6 +1882,8 @@ class ExcelCrafterApp:
             all_data = self.data_sales
         elif treeview == self.treeview3:
             all_data = self.data_beverage
+        elif treeview == self.treeview4:
+            all_data = self.data_beverage_sales
         else:
             return
 
