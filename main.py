@@ -166,7 +166,7 @@ class ExcelCrafterApp:
         
         # sales products ----------------------------------------------------------------
         # Add a title to the first tab (Product Page)
-        self.page_title(self.tab2, "The Sales Page")
+        self.page_title(self.tab2, "The Product Sales Page")
         
         # Create a Treeview widget (a table-like structure) in the first tab to display product data
         self.create_treeview("treeview2", self.tab2, path="sales.xlsx", columns=["Name", "Category", "Type", "Quantity", "Price", "Date", "Time"])
@@ -1124,7 +1124,7 @@ class ExcelCrafterApp:
         self.beverage_sales_price_spinbox.config(state="disabled")
 
         # Buttons for product operations , command=self.reset_sales_cancel
-        self.beverage_sales_cancel_button = ttk.Button(frame_widgets, text="Cancel")
+        self.beverage_sales_cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset_sales_cancel)
         self.beverage_sales_cancel_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
         self.beverage_sales_cancel_button.config(state="disabled")
         #, command=self.return_product
@@ -1954,8 +1954,15 @@ class ExcelCrafterApp:
                 if self.treeview2.item(item, "values")[0] == self.selected_sales_item[0]:
                     self.treeview2.selection_remove(item)
                     break
-            
             self.reset_sales_entry()
+            
+        elif self.selected_beverage_sales_item:
+            # Remove Selection item from Treeview4
+            for item in self.treeview4.get_children():
+                if self.treeview4.item(item, "values")[0] == self.selected_beverage_sales_item[0]:
+                    self.treeview4.selection_remove(item)
+                    break
+            self.reset_beverage_sales_entry()
             
     def reset_sales_entry(self):
         # Reset entry fields
@@ -1979,7 +1986,30 @@ class ExcelCrafterApp:
 
         self.sales_return_button.config(state="disabled")
         self.sales_cancel_button.config(state="disabled")
-              
+       
+    def reset_beverage_sales_entry(self):
+        # Reset entry fields
+        self.beverage_sales_name_entry.config(state="normal")
+        self.beverage_sales_name_entry.delete(0, "end")
+        self.beverage_sales_name_entry.config(state="disabled")
+        
+        self.beverage_sales_category_combobox.set(self.combo_list_beverageCategory[0])
+        self.beverage_sales_category_combobox.config(state="disabled")
+
+        self.beverage_sales_brand_entry.config(state="normal")
+        self.beverage_sales_brand_entry.delete(0, "end")
+        self.beverage_sales_brand_entry.config(state="disabled")
+
+        self.beverage_sales_quantity_spinbox.delete(0, "end")
+        self.beverage_sales_quantity_spinbox.config(state="disabled")
+
+        self.beverage_sales_price_spinbox.config(state="normal")
+        self.beverage_sales_price_spinbox.delete(0, "end")
+        self.beverage_sales_price_spinbox.config(state="disabled")
+
+        self.beverage_sales_return_button.config(state="disabled")
+        self.beverage_sales_cancel_button.config(state="disabled")
+        
     def reset_sales(self):
         if self.selected_sales_item:
             try:
