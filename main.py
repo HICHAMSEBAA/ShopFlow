@@ -72,6 +72,14 @@ class ExcelCrafterApp:
         self.beverage_cancel_button = None
         self.beverage_Sales_button = None
         
+        # widgets for the sales beverages windoes 
+        self.beverage_sales_name_entry  = None
+        self.beverage_sales_category_combobox = None
+        self.beverage_sales_brand_combobox  = None
+        self.beverage_sales_quantity_spinbox = None
+        self.beverage_sales_price_spinbox = None
+        self.beverage_sales_Sales_button = None
+        
 
         
         # Create a single search entry attribute
@@ -172,8 +180,7 @@ class ExcelCrafterApp:
         
         # beverage section ----------------------------------------------------------------
         
-        
-    
+
 # Sales products part ----------------------------------------------------------------------------
 
     def open_sales_window(self):
@@ -492,6 +499,149 @@ class ExcelCrafterApp:
 
 # ---------------------------------------------------------------------------------------
 
+# Sales Beverage Part ----------------------------------------------------------------------------
+
+    def open_beverage_sales_window(self):
+        # Get the selected item from the Treeview3
+        selected_item = self.treeview3.selection()
+        
+        # If no item is selected, show an error message and exit the function
+        if not selected_item:
+            messagebox.showerror("Error", "Please select a Beverage first.")
+            return
+        
+        # Try to retrieve the details of the selected product
+        try:
+            product_details = self.treeview3.item(selected_item, "values")
+            # Unpack the product details
+            id, product_name, category, product_brand, available_quantity, price, date, time = product_details
+            
+            # Check if the product is out of stock
+            if int(available_quantity) <= 0:
+                messagebox.showinfo("Info", "The Beverage is out of stock.")
+                return
+        except Exception as e:
+            # If there's an error retrieving product details, show an error message
+            messagebox.showerror("Error", f"Failed to retrieve Beverage details: {e}")
+            return
+        
+        # Create a new top-level window for the sales operation
+        sales_window = tk.Toplevel(self.root)
+        sales_window.title("Sales Operation")
+        
+        self.create_sales_window(
+                sales_window, 
+                product_name, 
+                category, 
+                product_brand, 
+                available_quantity, 
+                price, 
+                product_type_list=self.combo_list_beveragebrand,
+                window_title="Sales Beverage"
+            )
+        
+    def create_beverage_sales_window(self, sales_window, product_name, category, product_brand, available_quantity, price, product_type_list, window_title):
+        # Create the main frame within the sales window
+        main_frame = ttk.Frame(sales_window)
+        main_frame.pack(fill="both", expand=True)
+
+        # Create a labeled frame to hold the sales widgets
+        frame_widgets = ttk.LabelFrame(main_frame, text=window_title)
+        frame_widgets.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
+        
+        # ------------------ Product Name ------------------
+        # Label for product name
+        name_label = ttk.Label(frame_widgets, text="Name:")
+        name_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        
+        # Entry widget for product name (disabled as it's pre-filled)
+        product_name_entry = ttk.Entry(frame_widgets)
+        product_name_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        product_name_entry.insert(0, product_name)  # Set the initial value
+        product_name_entry.config(state="disabled")  # Disable the entry to prevent editing
+        
+        # ------------------ Category ------------------
+        # Label for category
+        category_label = ttk.Label(frame_widgets, text="Category:")
+        category_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        
+        # Combobox for category (disabled as it's pre-filled)
+        category_combobox = ttk.Combobox(
+            frame_widgets, 
+            values=self.combo_list_beverageCategory, 
+            state="readonly"
+        )
+        category_combobox.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        category_combobox.set(category)  # Set the initial value
+        category_combobox.config(state="disabled")  # Disable editing
+        
+        # ------------------ Type ------------------
+        # Label for product type
+        type_label = ttk.Label(frame_widgets, text="Brand:")
+        type_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        
+        # Combobox for product type
+        brand_combobox = ttk.Combobox(
+            frame_widgets, 
+            values=self.combo_list_beveragebrand, 
+            state="readonly"
+        )
+        brand_combobox.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
+        brand_combobox.set(product_brand)
+        brand_combobox.config(state="disabled")  # Disable if not SIM Cards
+
+
+        # ------------------ Quantity ------------------
+        # Label for quantity to sell
+        quantity_label = ttk.Label(frame_widgets, text="Quantity:")
+        quantity_label.grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        
+        # Spinbox for selecting quantity to sell (from 0 to available_quantity)
+        quantity_spinbox = ttk.Spinbox(
+            frame_widgets, 
+            from_=0, 
+            to=int(available_quantity)
+        )
+        quantity_spinbox.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
+        
+        # ------------------ Price ------------------
+        # Label for price
+        price_label = ttk.Label(frame_widgets, text="Price:")
+        price_label.grid(row=4, column=0, padx=5, pady=5, sticky="w")
+        
+        # Spinbox for setting the price (from 0.0 to 10000.0 with increments of 50)
+        price_spinbox = ttk.Spinbox(
+            frame_widgets, 
+            from_=0.0, 
+            to=10000.0, 
+            increment=50
+        )
+        price_spinbox.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
+        
+       
+        # price_spinbox.insert(0, price)  # Set the initial price
+        price_spinbox.config(state="disabled")  # Disable if not SIM Cards
+        
+        
+        # ------------------ Sell Button ------------------
+        # Button to execute the sell operation
+        sell_button = ttk.Button(
+            frame_widgets, 
+            text="Sell", 
+            # command=lambda: self.sell_product_from_window(
+            #     product_name, 
+            #     category_combobox, 
+            #     brand_combobox, 
+            #     quantity_spinbox,
+            #     price_spinbox,
+            #     sales_window
+            # )
+        )
+        sell_button.grid(row=5, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
+        
+
+# ---------------------------------------------------------------------------------------
+
 # GUI MAIN PART ------------------------------------------------------------------------------
 
     def create_notebook(self, frame):
@@ -763,7 +913,7 @@ class ExcelCrafterApp:
         separator.grid(row=7, column=0, columnspan=2, padx=(20, 10), pady=10, sticky="ew")
         
         # Sales Button , command=self.open_sales_window
-        self.beverage_Sales_button = ttk.Button(frame_widgets, text="Sale")
+        self.beverage_Sales_button = ttk.Button(frame_widgets, text="Sale", command=self.open_beverage_sales_window)
         self.beverage_Sales_button.grid(row=8, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
         self.beverage_Sales_button.config(state="disable")
 
