@@ -598,7 +598,7 @@ class ExcelCrafterApp:
         self.insert_button = ttk.Button(frame_widgets, text="Insert", command=self.insert_product)
         self.insert_button.grid(row=6, column=0, padx=5, pady=5, sticky="nsew")
 
-        self.update_button = ttk.Button(frame_widgets, text="Update", command= lambda :self.update_product(treeview=self.treeview1))
+        self.update_button = ttk.Button(frame_widgets, text="Update", command= lambda :self.update_item(treeview=self.treeview1, selected_item=self.selected_prodcut_item, file_path="products.xlsx", item_type="Product"))
         self.update_button.grid(row=6, column=1, padx=5, pady=5, sticky="nsew")
         self.update_button.config(state="disabled")
 
@@ -746,7 +746,7 @@ class ExcelCrafterApp:
         self.beverage_save_button = ttk.Button(frame_widgets, text="Insert", command=self.Insert_beverage)
         self.beverage_save_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
         # , command= lambda :self.update_product(treeview=self.treeview1)
-        self.beverage_update_button = ttk.Button(frame_widgets, text="Update", command=lambda: self.update_beverage(treeview=self.treeview3))
+        self.beverage_update_button = ttk.Button(frame_widgets, text="Update", command=lambda: self.update_item(treeview=self.treeview3, selected_item=self.selected_beverage_item, file_path="beverage.xlsx", item_type="Beverage"))
         self.beverage_update_button.grid(row=5, column=1, padx=5, pady=5, sticky="nsew")
         self.beverage_update_button.config(state="disabled")
         # , command=lambda: self.delete_product(treeview=self.treeview1)
@@ -1128,7 +1128,81 @@ class ExcelCrafterApp:
                 self.reset_beverage()
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred while updating the Beverage: {e}")
-    
+
+# UPDATE FUNCTIONALITY 'PRODUCT, BEVERAGE'
+    def update_item(self, treeview, selected_item, file_path, item_type):
+        if not selected_item:
+            messagebox.showwarning(f"Select {item_type}", f"Please select a {item_type.lower()} to update.")
+            return
+
+        # Show confirmation dialog
+        response = messagebox.askyesno(f"Confirm Update", f"Are you sure you want to update this {item_type.lower()}?")
+        
+        if response:
+            # Validate inputs based on item type
+            if item_type.lower() == "product":
+                validated_data = self.validate_inputs()  # For products
+            else:
+                validated_data = self.validate_beverage_input()  # For beverages
+                
+            if not validated_data:
+                return
+
+            name, category, product_type_or_brand, quantity, price = validated_data
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            current_time = datetime.now().strftime("%H:%M:%S")
+            
+            # Prepare new data based on item type
+            if item_type.lower() == "product":
+                new_data = [name, category, product_type_or_brand, quantity, price, current_date, current_time]
+            else:  # For beverages, assuming an additional column for 'Brand'
+                new_data = [selected_item, name, category, product_type_or_brand, quantity, price, current_date, current_time]
+
+            # Update Treeview
+            for item in treeview.get_children():
+                if treeview.item(item, "values")[0] == selected_item:
+                    treeview.item(item, values=new_data)
+                    break
+            
+            # Update Excel file
+            try:
+                workbook = openpyxl.load_workbook(file_path)
+                sheet = workbook.active
+
+                # Iterate through rows and update based on item type
+                for row in sheet.iter_rows(values_only=False):
+                    if row[0].value == selected_item:
+                        if item_type.lower() == "product":
+                            # For products: update relevant columns
+                            row[0].value = name
+                            row[1].value = category
+                            row[2].value = product_type_or_brand
+                            row[3].value = quantity
+                            row[4].value = price
+                            row[5].value = current_date
+                            row[6].value = current_time
+                        else:
+                            # For beverages: update relevant columns
+                            row[2].value = category
+                            row[3].value = product_type_or_brand  # Brand column for beverages
+                            row[4].value = quantity
+                            row[5].value = price
+                            row[6].value = current_date
+                            row[7].value = current_time
+                        break
+
+                workbook.save(file_path)
+                messagebox.showinfo("Success", f"{item_type} updated successfully!")
+                
+                # Call the appropriate reset method
+                if item_type.lower() == "product":
+                    self.reset_product()
+                elif item_type.lower() == "beverage":
+                    self.reset_beverage()
+
+            except Exception as e:
+                messagebox.showerror("Error", f"An error occurred while updating the {item_type.lower()}: {e}")
+
 
 # DELETE FUNCTIONALITY 
 
