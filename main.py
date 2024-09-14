@@ -529,8 +529,9 @@ class ExcelCrafterApp:
         sales_window = tk.Toplevel(self.root)
         sales_window.title("Sales Operation")
         
-        self.create_sales_window(
-                sales_window, 
+        self.create_beverage_sales_window(
+                sales_window,
+                id, 
                 product_name, 
                 category, 
                 product_brand, 
@@ -540,7 +541,7 @@ class ExcelCrafterApp:
                 window_title="Sales Beverage"
             )
         
-    def create_beverage_sales_window(self, sales_window, product_name, category, product_brand, available_quantity, price, product_type_list, window_title):
+    def create_beverage_sales_window(self, sales_window, id, product_name, category, product_brand, available_quantity, price, product_type_list, window_title):
         # Create the main frame within the sales window
         main_frame = ttk.Frame(sales_window)
         main_frame.pack(fill="both", expand=True)
@@ -617,9 +618,7 @@ class ExcelCrafterApp:
             increment=50
         )
         price_spinbox.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
-        
-       
-        # price_spinbox.insert(0, price)  # Set the initial price
+        price_spinbox.insert(0, price)  # Set the initial price
         price_spinbox.config(state="disabled")  # Disable if not SIM Cards
         
         
@@ -628,17 +627,141 @@ class ExcelCrafterApp:
         sell_button = ttk.Button(
             frame_widgets, 
             text="Sell", 
-            # command=lambda: self.sell_product_from_window(
-            #     product_name, 
-            #     category_combobox, 
-            #     brand_combobox, 
-            #     quantity_spinbox,
-            #     price_spinbox,
-            #     sales_window
-            # )
+            command=lambda: self.sell_beverage_from_window(
+                id,
+                product_name_entry.get(), 
+                category_combobox, 
+                brand_combobox, 
+                quantity_spinbox,
+                price_spinbox,
+                sales_window
+            )
         )
         sell_button.grid(row=5, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
+ 
+    def sell_beverage_from_window(self, id, product_name, category_combobox, brand_combobox, quantity_spinbox, price, window):
         
+            # Validate the quantity entered by the user
+            try:
+                quantity_sold = int(quantity_spinbox.get())  # Get the quantity to sell
+                if quantity_sold <= 0:
+                    # If quantity is not positive, show an error message
+                    messagebox.showerror("Error", "Please enter a valid quantity.")
+                    return
+            except Exception as e:
+                # If there's an error parsing the quantity, show an error message
+                messagebox.showerror("Error", f"An error occurred while processing the quantity: {e}")
+                return
+            
+            # Show confirmation dialog
+            response = messagebox.askyesno("Confirm Sell", "Are you sure you want to Sell this Beverage?")
+            
+            if  response:
+                
+                # Path to the products Excel file
+                path = "beverage.xlsx"
+                
+                try:
+                    # Load the Excel workbook and select the active sheet
+                    workbook = openpyxl.load_workbook(path)
+                    sheet = workbook.active
+
+                    # Iterate through the rows to find the matching product
+                    for row in sheet.iter_rows(min_row=2, values_only=False):
+                        if row[0].value == id:
+                            available_quantity = int(row[4].value)  # Current stock
+                            
+                            # Check if there is sufficient stock to fulfill the sale
+                            if quantity_sold > available_quantity:
+                                # If not enough stock, show a warning message
+                                messagebox.showwarning("Insufficient Stock", f"Only {available_quantity} units available.")
+                                return
+                            else:
+                                # Deduct the sold quantity from available stock
+                                row[4].value = available_quantity - quantity_sold
+                                # Prepare the updated data for the Treeview
+                                new_data = [row[i].value for i in range(len(row))]
+                                break
+                    else:
+                        # If the product was not found in the Excel sheet, show a warning
+                        messagebox.showwarning("Product Not Found", "The specified product was not found.")
+                        return
+
+                    # Save the updated workbook back to the file
+                    workbook.save(path)
+                    
+                    # Record the sale in the sales log
+                    self.record_beverage_sale(
+                        product_name, 
+                        str(category_combobox.get()), 
+                        price.get(),
+                        str(brand_combobox.get()), 
+                        quantity_sold
+                    )
+                    
+                    # Close the sales window after successful sale
+                    window.destroy()
+
+                    # Notify the user of the successful sale
+                    messagebox.showinfo("Success", "Product sold successfully!")
+                    
+                    # Update the Treeview1 to reflect the new quantity
+                    for item in self.treeview3.get_children():
+                        if self.treeview3.item(item, "values")[0] == id:
+                            self.treeview3.item(item, values=new_data)
+                            break
+                    
+                    # Reset any necessary variables or states
+                    self.reset_beverage()
+                    
+                except Exception as e:
+                    # If any error occurs during the sale process, show an error message
+                    messagebox.showerror("Error", f"An error occurred while selling the product: {e}")
+        
+    def record_beverage_sale(self, beverage_name, category, price, brand, quantity_sold):
+        
+        # Path to the sales Excel file
+        sales_path = "beverage_sales.xlsx"
+        
+        # Get the current date and time for the sale record
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        current_time = datetime.now().strftime("%H:%M:%S")
+
+        # Generate a random UUID
+        unique_id = uuid.uuid4()
+
+        # Convert to string if needed
+        unique_id_str = str(unique_id)
+    
+        # Create a list representing the sale record
+        sale_record = [unique_id_str, beverage_name, category, brand, quantity_sold, price, current_date, current_time]
+
+        try:
+            if not os.path.exists(sales_path):
+                # If the sales file doesn't exist, create it and add headers
+                workbook = openpyxl.Workbook()
+                sheet = workbook.active
+                headers = ["Id", "Name", "Category", "Brand", "Quantity Sold", "price", "Date", "Time"]
+                sheet.append(headers)
+            else:
+                # If the sales file exists, load it
+                workbook = openpyxl.load_workbook(sales_path)
+                sheet = workbook.active
+
+            # Append the sale record to the sales sheet
+            sheet.append(sale_record)
+            
+            # Save the workbook
+            workbook.save(sales_path)
+            
+            # # Insert into Treeview
+            # self.treeview3.insert('', tk.END, values=sale_record)
+            
+        except Exception as e:
+            # If there's an error recording the sale, show an error message
+            messagebox.showerror("Error", f"An error occurred while recording the sale: {e}")
+
+
 
 # ---------------------------------------------------------------------------------------
 
@@ -1651,8 +1774,8 @@ class ExcelCrafterApp:
         # Reset input fields
         self.beverage_name_entry.config(state="normal")
         self.beverage_name_entry.delete(0, "end")
-        self.beverage_category_combobox.set(self.combo_list_ProductCategory[0])
-        self.beverage_brand_combobox.set(self.combo_list_ProductType[0])
+        self.beverage_category_combobox.set(self.combo_list_beverageCategory[0])
+        self.beverage_brand_combobox.set(self.combo_list_beveragebrand[0])
         self.beverage_quantity_spinbox.delete(0, "end")
         self.beverage_price_spinbox.delete(0, "end")
         
