@@ -1228,8 +1228,8 @@ class ExcelCrafterApp:
             self.product_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview1))
         elif path == "sales.xlsx":
             self.sales_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview2))
-        # elif path == "beverage.xlsx":
-        #     self.sales_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview3))
+        elif path == "beverage.xlsx":
+             self.beverage_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview3))
         # elif path == "beverage_sales.xlsx":
         #     self.sales_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview4))
             
@@ -1840,15 +1840,14 @@ class ExcelCrafterApp:
         if self.reset_product_flag:
             self.reset_product()
         search_term = search_entry.get().lower()
-        print( search_entry == self.sales_search_entry)
-        print( search_entry == self.product_search_entry)
-        print(search_term)
         treeview.delete(*treeview.get_children())
         
         if treeview == self.treeview1:
             all_data = self.data_product
         elif treeview == self.treeview2:
             all_data = self.data_sales
+        elif treeview == self.treeview3:
+            all_data = self.data_beverage
         else:
             return
 
