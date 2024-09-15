@@ -1149,11 +1149,11 @@ class ExcelCrafterApp:
         self.beverage_date_end.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
         
         # , command=self.calculate_sales
-        calculate_sales_button = ttk.Button(frame_widgets, text="Total")
+        calculate_sales_button = ttk.Button(frame_widgets, text="Total", command=self.calculate_beverage_sales)
         calculate_sales_button.grid(row=9, column=0, padx=5, pady=5, sticky="nsew")
-        self.calculate_sales_entry = ttk.Entry(frame_widgets)
-        self.calculate_sales_entry.grid(row=9, column=1, padx=5, pady=5, sticky="ew")
-        self.calculate_sales_entry.config(state="disabled")
+        self.beverage_calculate_sales_entry = ttk.Entry(frame_widgets)
+        self.beverage_calculate_sales_entry.grid(row=9, column=1, padx=5, pady=5, sticky="ew")
+        self.beverage_calculate_sales_entry.config(state="disabled")
 
     def create_treeview(self, treeview_attr, frame, path, columns):
         """Creates the treeview widget for displaying product data."""
@@ -1955,8 +1955,6 @@ class ExcelCrafterApp:
             if any(search_term in str(cell).lower() for cell in value_tuple):
                 treeview.insert('', tk.END, values=value_tuple)
               
-              
-                
 # RESET FUNCTIONALITY
 
     def reset_product(self):
@@ -2193,7 +2191,31 @@ class ExcelCrafterApp:
         self.calculate_sales_entry.delete(0, "end")
         self.calculate_sales_entry.insert(0, string=f"{total_sales_amount} DA")
         self.calculate_sales_entry.config(state="disabled")
-                    
+                 
+    # Function to calculate total sales between two dates 
+    def calculate_beverage_sales(self):
+        file_path = 'beverage_sales.xlsx'
+        wb = openpyxl.load_workbook(file_path)
+        sheet = wb.active
+        total_sales_amount = 0
+        start_date_ = self.beverage_date_start.get_date().strftime('%Y-%m-%d')
+        end_date_ = self.beverage_date_end.get_date().strftime('%Y-%m-%d')
+        start_date = datetime.strptime(start_date_, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date_, '%Y-%m-%d')
+
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            date_str = row[6]  # Assuming 'Date' is in the 7th column (index 6)
+            if isinstance(date_str, str):
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+
+                if start_date <= date_obj <= end_date:
+                    quantity = float(row[4])  # Quantity in the 5th column (index 4)
+                    price = float(row[5])     # Price in the 6th column (index 5)
+                    total_sales_amount += quantity * price
+        self.beverage_calculate_sales_entry.config(state="normal")
+        self.beverage_calculate_sales_entry.delete(0, "end")
+        self.beverage_calculate_sales_entry.insert(0, string=f"{total_sales_amount} DA")
+        self.beverage_calculate_sales_entry.config(state="disabled")
 #FUN PART ------------------------------------------------------------------------------
 
 if __name__ == "__main__":
