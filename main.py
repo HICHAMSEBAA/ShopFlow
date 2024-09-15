@@ -780,7 +780,7 @@ class ExcelCrafterApp:
             workbook.save(sales_path)
             
             # # Insert into Treeview
-            # self.treeview3.insert('', tk.END, values=sale_record)
+            self.treeview4.insert('', tk.END, values=sale_record)
             
         except Exception as e:
             # If there's an error recording the sale, show an error message
@@ -1128,7 +1128,7 @@ class ExcelCrafterApp:
         self.beverage_sales_cancel_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
         self.beverage_sales_cancel_button.config(state="disabled")
         #, command=self.return_product
-        self.beverage_sales_return_button = ttk.Button(frame_widgets, text="Return")
+        self.beverage_sales_return_button = ttk.Button(frame_widgets, text="Return", command=self.return_beverage)
         self.beverage_sales_return_button.grid(row=5, column=1, padx=5, pady=5, sticky="nsew")
         self.beverage_sales_return_button.config(state="disabled")
 
@@ -1139,14 +1139,14 @@ class ExcelCrafterApp:
         # Create a DateEntry widget start
         date_start_label = ttk.Label(frame_widgets, text="Start Date")
         date_start_label.grid(row=7, column=0, padx=5, pady=5, sticky="w")
-        self.date_start = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
-        self.date_start.grid(row=7, column=1, padx=5, pady=5, sticky="ew")
+        self.beverage_date_start = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
+        self.beverage_date_start.grid(row=7, column=1, padx=5, pady=5, sticky="ew")
         
         # Create a DateEntry widget end
         date_end_label = ttk.Label(frame_widgets, text="End Date")
         date_end_label.grid(row=8, column=0, padx=5, pady=5, sticky="w")
-        self.date_end = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
-        self.date_end.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
+        self.beverage_date_end = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
+        self.beverage_date_end.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
         
         # , command=self.calculate_sales
         calculate_sales_button = ttk.Button(frame_widgets, text="Total")
@@ -1825,7 +1825,8 @@ class ExcelCrafterApp:
                 self._remove_from_sales_file("sales.xlsx")
                 self._update_products_file("products.xlsx")
                 messagebox.showinfo("Success", "Product return successful!")
-                self.reset_sales()
+                self.reset_product_sales()
+                self.reset_sales_entry()
                 self.return_sales_flag = False
 
         except Exception as e:
@@ -1855,7 +1856,6 @@ class ExcelCrafterApp:
         products_workbook = openpyxl.load_workbook(products_path)
         products_sheet = products_workbook.active
         
-        print("_update_products_file")
 
         # Update the product quantity in products.xlsx
         for row in products_sheet.iter_rows(values_only=False):
@@ -1867,6 +1867,70 @@ class ExcelCrafterApp:
 
         products_workbook.save(products_path)
 
+# RETURN BEVERAGE SALES FUNCTIONALITY 
+
+    def return_beverage(self):
+        if not self.selected_beverage_sales_item:
+            messagebox.showwarning("Select Item", "Please select an beverage to return.")
+            return
+
+        # Load the quantity to return
+        try:
+            self.return_beverage_quantity = int(self.beverage_sales_quantity_spinbox.get())
+        except ValueError:
+            messagebox.showerror("Error", "Please enter a valid quantity.")
+            return
+
+        # Confirm return action
+        if not messagebox.askyesno("Confirm Return", f"Are you sure you want to return {self.return_beverage_quantity} of '{self.selected_beverage_sales_item[1]}'?"):
+            return
+
+        self.return_beverage_sales_flag = True
+
+        # Perform the return
+        try:
+                self._remove_from_bevarage_sales_file("beverage_sales.xlsx")
+                self._update_beverage_file("beverage.xlsx")
+                messagebox.showinfo("Success", "Beverage return successful!")
+                self.reset_beverage_sales()
+                self.reset_beverage_sales_entry()
+                self.return_beverage_sales_flag = False
+
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while returning the Beverage: {e}")
+            
+    def _remove_from_bevarage_sales_file(self, sales_path):
+        sales_workbook = openpyxl.load_workbook(sales_path)
+        sales_sheet = sales_workbook.active
+        
+
+        # Find and update the row in beverage_sales.xlsx
+        for i, row in enumerate(sales_sheet.iter_rows(values_only=False), start=1):
+            if str(row[0].value) == str(self.selected_beverage_sales_item[0]):  # Assuming column 0 is the sales item ID
+                if row[4].value is None or not isinstance(row[4].value, (int, float)):
+                    raise ValueError("Invalid or missing quantity in the sales record.")
+                if row[4].value > self.return_beverage_quantity:
+                    row[4].value -= self.return_beverage_quantity
+                elif row[4].value == self.return_beverage_quantity:
+                    sales_sheet.delete_rows(i, 1)
+                else:
+                    raise ValueError("Return quantity exceeds available quantity.")
+                break
+
+        sales_workbook.save(sales_path)
+        
+    def _update_beverage_file(self, beverage_path):
+        products_workbook = openpyxl.load_workbook(beverage_path)
+        products_sheet = products_workbook.active
+        
+
+        # Update the product quantity in products.xlsx
+        for row in products_sheet.iter_rows(values_only=False):
+            if row[1].value == self.selected_beverage_sales_item[1]:  # Assuming column 0 is the product ID
+                row[4].value += self.return_beverage_quantity  # Assuming column 3 is the product quantity
+                break
+            
+        products_workbook.save(beverage_path)
 
 # SEARCH FUNCTIONALITY 
     
@@ -2010,7 +2074,7 @@ class ExcelCrafterApp:
         self.beverage_sales_return_button.config(state="disabled")
         self.beverage_sales_cancel_button.config(state="disabled")
         
-    def reset_sales(self):
+    def reset_product_sales(self):
         if self.selected_sales_item:
             try:
                 selected_quantity = int(self.selected_sales_item[2])
@@ -2041,8 +2105,33 @@ class ExcelCrafterApp:
         self.reset_sales_entry()
 
         self.reset_sales_flag = False
+    
+    def reset_beverage_sales(self):
+        if self.selected_beverage_sales_item:
+            try:
+                selected_quantity = int(self.selected_beverage_sales_item[2])
+                if selected_quantity < self.return_beverage_quantity:
+                    messagebox.showerror("Error", f"the return quantity is bigger than the sales quantity in the table please insert quantity less than {selected_quantity}.")
+                    return 
+            except (ValueError, IndexError):
+                messagebox.showerror("Error", "Invalid quantity or item selection.")
+                return 
+            if self.return_beverage_sales_flag and selected_quantity > self.return_beverage_quantity:
+                
+                # Update ITEM FROM Treeview4
+                self.update_treeview4()
+            else:
+                
+                # Delete item from Treeview4
+                for item in self.treeview4.get_children():
+                    if self.treeview4.item(item, "values")[0] == self.selected_beverage_sales_item[0]:
+                        self.treeview4.delete(item)
+                        break
+                
+            # Update ITEM FROM Treeview1
+            self.update_treeview3()
         
-# Update tables for the return fun ..     
+# Update tables "1,2" for the return fun ..     
     def update_treeview2(self):
         for item in self.treeview2.get_children():
             if self.treeview2.item(item, "values")[0] == self.selected_sales_item[0]:
@@ -2061,6 +2150,25 @@ class ExcelCrafterApp:
                 self.treeview1.selection_remove(item)
                 break
 
+# Update tables "3,4" for the return fun ..     
+    def update_treeview4(self):
+        for item in self.treeview4.get_children():
+            if self.treeview4.item(item, "values")[0] == self.selected_beverage_sales_item[0]:
+                values = list(self.treeview4.item(item, "values"))
+                values[4] = str(int(values[4]) - self.return_beverage_quantity)
+                self.treeview4.item(item, values=values)
+                self.treeview4.selection_remove(item)
+                break
+
+    def update_treeview3(self):
+        for item in self.treeview3.get_children():
+            if self.treeview3.item(item, "values")[1] == self.selected_beverage_sales_item[1]:
+                values = list(self.treeview3.item(item, "values"))
+                values[4] = str(int(values[4]) + self.return_beverage_quantity)
+                self.treeview3.item(item, values=values)
+                self.treeview3.selection_remove(item)
+                break
+        
     # Function to calculate total sales between two dates
     def calculate_sales(self):
         file_path = 'sales.xlsx'  
