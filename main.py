@@ -31,6 +31,11 @@ class ExcelCrafterApp:
         # Initialize beverage-related
         self.combo_list_beverageCategory = ["Soft Drinks", "Juices", "Water", "Energy Drinks", "Tea & Coffee", "Alcoholic Beverages", "Dairy-Based Drinks", "Smoothies", "Mocktails", "Herbal and Health Drinks" ] 
         self.combo_list_beveragebrand = ["Coca-Cola", "Pepsi", "7UP", "Sprite", "Fanta"]
+        
+        # Initialize printer-related
+        self.combo_list_printerCatrgory = ["Out", "In"] 
+        self.combo_list_printerType_OUT = ["Ram", "Tonore"]
+        self.combo_list_printerType_IN  = ["One Face", "Duable Face"]
 
     # product section ---------------------------------------------------------------------
     
@@ -81,6 +86,22 @@ class ExcelCrafterApp:
         self.beverage_sales_return_button = None
         self.beverage_sales_cancel_button = None
         
+    # Beverage section ---------------------------------------------------------------------
+        
+    # Printer section ---------------------------------------------------------------------
+    
+        # widgets for the beverages management
+        self.printer_category_combobox = None
+        self.printer_type_out_combobox = None
+        self.printer_type_in_combobox  = None
+        self.printer_quantity_spinbox  = None
+        self.printer_save_button       = None
+        self.printer_update_button     = None
+        self.printer_delete_button     = None
+        self.printer_cancel_button     = None
+    
+    # Printer section ---------------------------------------------------------------------
+        
 
         
         # Create a single search entry attribute
@@ -88,6 +109,7 @@ class ExcelCrafterApp:
         self.sales_search_entry = None
         self.beverage_search_entry = None
         self.beverage_sales_search_entry = None
+        self.printer_search_entry = None
         
         
         # Initialize Tables View
@@ -95,25 +117,31 @@ class ExcelCrafterApp:
         self.treeview2 = None
         self.treeview3 = None
         self.treeview4 = None
+        self.treeview5 = None
+        
         
         # Data load initialization 
         self.data_product = None
         self.data_sales = None
         self.data_beverage = None
         self.data_beverage_sales = None
+        self.data_printer = None
         
         # Initialize a variable to keep track of the selected item in the Treeview1
         self.selected_prodcut_item = None
         
-        # Initialize a variable to keep track of the selected item in the Treeview1
+        # Initialize a variable to keep track of the selected item in the Treeview3
         self.selected_beverage_item = None
         
         
         # Initialize a variable to keep track of the selected item in the Treeview2
         self.selected_sales_item = []
         
-        # Initialize a variable to keep track of the selected item in the Treeview2
+        # Initialize a variable to keep track of the selected item in the Treeview4
         self.selected_beverage_sales_item = []
+        
+        # Initialize a variable to keep track of the selected item in the Treeview5
+        self.selected_printer_item = []
         
         # RESET Product Flage
         self.reset_product_flag = False
@@ -126,6 +154,9 @@ class ExcelCrafterApp:
         
         # RESET Beverage Sales Flage
         self.reset_beverage_sales_flag = False
+        
+        # RESET Beverage Sales Flage
+        self.reset_printer_flag = False
         
         # RETURN Sales Flage
         self.return_sales_flag = False
@@ -205,6 +236,10 @@ class ExcelCrafterApp:
         # Create a search bar in the first tab to allow users to search through products
         self.create_search(self.tab4, "beverage_sales_search_entry", path="beverage_sales.xlsx")
         # sales -------------------------------------------------------------------------
+        
+        # printer section ----------------------------------------------------------------
+        
+        # printer section ----------------------------------------------------------------
         
 # Sales products part ----------------------------------------------------------------------------
 
@@ -835,7 +870,13 @@ class ExcelCrafterApp:
         self.tab4.grid_rowconfigure(1, weight=1)
         self.tab4.grid_columnconfigure(1, weight=1)
         
+        # Create the second tab (Beverage Sales)
+        self.tab5 = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab5, text="Prenter")
         
+        # Configure grid weights for the tab5 to make it expandable
+        self.tab5.grid_rowconfigure(1, weight=1)
+        self.tab5.grid_columnconfigure(1, weight=1)
         
         # Bind the <<NotebookTabChanged>> event
         self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_selected)
@@ -1075,6 +1116,9 @@ class ExcelCrafterApp:
         self.beverage_Sales_button = ttk.Button(frame_widgets, text="Sale", command=self.open_beverage_sales_window)
         self.beverage_Sales_button.grid(row=8, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
         self.beverage_Sales_button.config(state="disable")
+
+    def add_printer_widgets(self, frame):
+        pass
 
     def add_beverage_sales_widgets(self, frame):
         """Creates and adds the widgets for the product management section."""
@@ -1388,8 +1432,7 @@ class ExcelCrafterApp:
                 self.beverage_sales_cancel_button.config(state="normal")
                 
                 # Store the selected item's ID 
-                self.selected_beverage_sales_item = [item_values[0],  item_values[1], item_values[4]]
-                
+                self.selected_beverage_sales_item = [item_values[0],  item_values[1], item_values[4]]               
                 
     def load_data(self, treeview, path):
         """Loads data from the Excel file and inserts it into the treeview."""
