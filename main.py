@@ -33,7 +33,7 @@ class ExcelCrafterApp:
         self.combo_list_beveragebrand = ["Coca-Cola", "Pepsi", "7UP", "Sprite", "Fanta"]
         
         # Initialize printer-related
-        self.combo_list_printerCatrgory = ["Out", "In"] 
+        self.combo_list_printerCatrgory = ["Out", "In", "Waste"]
         self.combo_list_printerType_OUT = ["Ram", "Tonore"]
         self.combo_list_printerType_IN  = ["One Face", "Duable Face"]
 
@@ -238,7 +238,17 @@ class ExcelCrafterApp:
         # sales -------------------------------------------------------------------------
         
         # printer section ----------------------------------------------------------------
+        # Add a title to the 5 tab (printer Page)
+        self.page_title(self.tab5, "The Printer Page")
         
+        # Create a Treeview widget (a table-like structure) in the first tab to display printer data
+        self.create_treeview("treeview5", self.tab5, path="printer.xlsx", columns=["id", "Name", "Category", "Brand", "Quantity", "Price", "Date", "Time"])
+        
+        # Add product management widgets (input fields, buttons, etc.) to the first tab
+        self.add_printer_widgets(self.tab5)
+        
+        # Create a search bar in the first tab to allow users to search through products
+        self.create_search(self.tab5, "printer_search_entry", path="printer.xlsx")
         # printer section ----------------------------------------------------------------
         
 # Sales products part ----------------------------------------------------------------------------
@@ -1118,7 +1128,80 @@ class ExcelCrafterApp:
         self.beverage_Sales_button.config(state="disable")
 
     def add_printer_widgets(self, frame):
-        pass
+        """Creates and adds the widgets for the printer management section."""
+        frame_widgets = ttk.LabelFrame(frame, text="Printer")
+        frame_widgets.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
+        
+        # Configure grid weights to make columns and rows responsive
+        frame_widgets.grid_columnconfigure(1, weight=1)  # Make the second column (with entry fields) expandable
+        for i in range(9):
+            frame_widgets.grid_rowconfigure(i, weight=1)  # Make each row expandable
+        
+        # self.printer_category_combobox = None
+        # self.printer_type_out_combobox = None
+        # self.printer_type_in_combobox  = None
+        # self.printer_quantity_spinbox  = None
+        # self.printer_save_button       = None
+        # self.printer_update_button     = None
+        # self.printer_delete_button     = None
+        # self.printer_cancel_button     = None
+        
+        # Label and combobox for category
+        cattegory_label = ttk.Label(frame_widgets, text="Category:")
+        cattegory_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.printer_category_combobox = ttk.Combobox(frame_widgets, values=self.combo_list_printerCatrgory, state="readonly")
+        self.printer_category_combobox.current(0)
+        self.printer_category_combobox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Label and combobox for type
+        type_in_label = ttk.Label(frame_widgets, text="Type In :")
+        type_in_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.printer_type_in_combobox = ttk.Combobox(frame_widgets, values=self.combo_list_printerType_IN, state="readonly")
+        self.printer_type_in_combobox.current(0)
+        self.printer_type_in_combobox.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        
+        #  Label and combobox for type
+        type_in_label = ttk.Label(frame_widgets, text="Type Out :")
+        type_in_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.printer_type_out_combobox = ttk.Combobox(frame_widgets, values=self.combo_list_printerType_OUT, state="readonly")
+        self.printer_type_out_combobox.current(0)
+        self.printer_type_out_combobox.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
+        
+        #  Label and spinbox for quantity
+        quantity_label = ttk.Label(frame_widgets, text="Quantity")
+        quantity_label.grid(row=3, column=0, sticky="w")
+        self.printer_quantity_spinbox = ttk.Spinbox(frame_widgets, from_=0.0, to=500.0, increment=1)
+        self.printer_quantity_spinbox.grid(row=3,  column=1, padx=5, pady=5, sticky="ew")
+        
+        #  button for save , command=self.printer_saver
+        self.printer_save_button = ttk.Button(frame_widgets, text="Save")
+        self.printer_save_button.grid(row=4, column=0, padx=5, pady=5, sticky="nsew")
+        self.printer_save_button.config(state='disabled')
+        
+        #    button for update , command=self.printer_updater
+        self.printer_update_button = ttk.Button(frame_widgets, text="Update")
+        self.printer_update_button.grid(row=4, column=1, padx=5, pady=5, sticky="nsew")
+        self.printer_update_button.config(state="disabled")
+        
+        #    button for delete , command=self.printer_deleter
+        self.printer_delete_button = ttk.Button(frame_widgets, text="Delete")
+        self.printer_delete_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
+        self.printer_delete_button.config(state="disabled")
+        
+        #     button for cancel , command=self.printer_canceler
+        self.printer_cancel_button = ttk.Button(frame_widgets, text="Cancel")
+        self.printer_cancel_button.grid(row=5, column=1, padx=5, pady=5, sticky="nsew")
+        self.printer_cancel_button.config(state="disabled")
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
     def add_beverage_sales_widgets(self, frame):
         """Creates and adds the widgets for the product management section."""
