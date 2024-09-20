@@ -1530,6 +1530,9 @@ class ExcelCrafterApp:
             elif path == "beverage_sales.xlsx":
                 self.data_beverage_sales = list(sheet.values)  # Store all data for searching
                 all_data = self.data_beverage_sales
+            elif path == "printer.xlsx":
+                self.data_printer = list(sheet.values)  # Store all data for searching
+                all_data = self.data_printer
             headers = all_data[0]
             treeview["columns"] = headers
             for col in headers:
@@ -2447,6 +2450,7 @@ class ExcelCrafterApp:
         self.beverage_calculate_sales_entry.delete(0, "end")
         self.beverage_calculate_sales_entry.insert(0, string=f"{total_sales_amount} DA")
         self.beverage_calculate_sales_entry.config(state="disabled")
+
 #FUN PART ------------------------------------------------------------------------------
 
 if __name__ == "__main__":
