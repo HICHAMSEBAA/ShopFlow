@@ -1994,13 +1994,14 @@ class ExcelCrafterApp:
             workbook.save(path)
             
             # Insert into Treeview
-            self.treeview5.insert('', tk.END, values=row_values)
+            self.treeview5.after(0, lambda: self.treeview5.insert('', tk.END, values=row_values))
+
             
             # Update the stored data
-            self.data_product.append(row_values)
+            # self.data_printer.append(row_values)
             
             # # Clear the input fields
-            # self.reset_product()
+            self.reset_printer()
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while inserting the product: {e}")
     
@@ -2333,6 +2334,31 @@ class ExcelCrafterApp:
                 
             # Update ITEM FROM Treeview1
             self.update_treeview3()
+          
+    def reset_printer(self):
+        if self.selected_printer_item:
+            for item in self.treeview5.get_children():
+                if self.treeview5.item(item, "values")[0] == self.selected_printer_item:
+                    self.treeview5.selection_remove(item)
+                    break
+        self.selected_printer_item = None
+        
+        # Reset on the printer button part 
+        self.printer_cancel_button.config(state="disabled")
+        self.printer_update_button.config(state="disabled")
+        self.printer_delete_button.config(state="disabled")
+        self.printer_save_button.config(state="normal")
+        
+        # Reset on the printer input part 
+        self.printer_category_combobox.current(0)
+        self.printer_type_in_combobox.current(0)
+        self.printer_type_in_combobox.config(state="disabled")
+        self.printer_type_out_combobox.current(0)
+        self.printer_type_out_combobox.config(state="disabled")
+        self.printer_quantity_spinbox.delete(0, "end")
+        self.printer_quantity_spinbox.config(state="disabled")
+        self.printer_price_spinbox.delete(0, "end")
+        self.printer_price_spinbox.config(state="disabled")
         
 # Update tables "1,2" for the return fun ..     
     def update_treeview2(self):
