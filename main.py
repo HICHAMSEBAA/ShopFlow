@@ -95,6 +95,7 @@ class ExcelCrafterApp:
         self.printer_type_out_combobox = None
         self.printer_type_in_combobox  = None
         self.printer_quantity_spinbox  = None
+        self.printer_price_spinbox  = None
         self.printer_save_button       = None
         self.printer_update_button     = None
         self.printer_delete_button     = None
@@ -242,11 +243,11 @@ class ExcelCrafterApp:
         self.page_title(self.tab5, "The Printer Page")
         
         # Create a Treeview widget (a table-like structure) in the first tab to display printer data
-        self.create_treeview("treeview5", self.tab5, path="printer.xlsx", columns=["id", "Name", "Category", "Brand", "Quantity", "Price", "Date", "Time"])
+        self.create_treeview("treeview5", self.tab5, path="printer.xlsx", columns=["id", "Category", "Type", "Quantity", "Price", "Date", "Time"])
         
         # Add product management widgets (input fields, buttons, etc.) to the first tab
         self.add_printer_widgets(self.tab5)
-        
+    
         # Create a search bar in the first tab to allow users to search through products
         self.create_search(self.tab5, "printer_search_entry", path="printer.xlsx")
         # printer section ----------------------------------------------------------------
@@ -1173,24 +1174,30 @@ class ExcelCrafterApp:
         self.printer_quantity_spinbox = ttk.Spinbox(frame_widgets, from_=0.0, to=500.0, increment=1)
         self.printer_quantity_spinbox.grid(row=3,  column=1, padx=5, pady=5, sticky="ew")
         
-        #  button for save , command=self.printer_saver
+        # Label and spinbox for price
+        price_label = ttk.Label(frame_widgets, text="Price")
+        price_label.grid(row=4, column=0, padx=5, pady=5, sticky="w")
+        self.printer_price_spinbox = ttk.Spinbox(frame_widgets, from_=0.0, to=4000, increment=100)
+        self.printer_price_spinbox.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
+        
+        #  button for save , command=self.Save_printer_data
         self.printer_save_button = ttk.Button(frame_widgets, text="Save")
-        self.printer_save_button.grid(row=4, column=0, padx=5, pady=5, sticky="nsew")
-        self.printer_save_button.config(state='disabled')
+        self.printer_save_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
+
         
         #    button for update , command=self.printer_updater
         self.printer_update_button = ttk.Button(frame_widgets, text="Update")
-        self.printer_update_button.grid(row=4, column=1, padx=5, pady=5, sticky="nsew")
+        self.printer_update_button.grid(row=5, column=1, padx=5, pady=5, sticky="nsew")
         self.printer_update_button.config(state="disabled")
         
         #    button for delete , command=self.printer_deleter
         self.printer_delete_button = ttk.Button(frame_widgets, text="Delete")
-        self.printer_delete_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
+        self.printer_delete_button.grid(row=6, column=0, padx=5, pady=5, sticky="nsew")
         self.printer_delete_button.config(state="disabled")
         
         #     button for cancel , command=self.printer_canceler
         self.printer_cancel_button = ttk.Button(frame_widgets, text="Cancel")
-        self.printer_cancel_button.grid(row=5, column=1, padx=5, pady=5, sticky="nsew")
+        self.printer_cancel_button.grid(row=6, column=1, padx=5, pady=5, sticky="nsew")
         self.printer_cancel_button.config(state="disabled")
         
         
@@ -1559,6 +1566,8 @@ class ExcelCrafterApp:
             headers = ["Name", "Category", "Type", "Quantity", "Price", "Date", "Time"]
             headers_sales = ["Id", "Name", "Category", "Type", "Quantity", "Price", "Date", "Time"]
             headers_beverage = ["Id", "Name", "Category", "Brand", "Quantity", "Price", "Date", "Time"]
+            headers_beverage_sales = ["Id", "Name", "Category", "Brand", "Quantity", "Price", "Date", "Time"]
+            headers_printer = ["Id", "Category", "type", "Quantity", "Price","Date", "Time"]
             if  path == "products.xlsx":
                 sheet.append(headers)
                 self.data_product = [headers]
@@ -1568,6 +1577,10 @@ class ExcelCrafterApp:
             elif path == "beverage.xlsx":
                 sheet.append(headers_beverage)
                 self.data_beverage = [headers_beverage]
+            elif path == "beverage_sales.xlsx":
+                sheet.append(headers_beverage_sales)
+            elif path == "printer.xlsx":
+                sheet.append(headers_printer)
             else:
                 return
             workbook.save(path)
@@ -1925,6 +1938,60 @@ class ExcelCrafterApp:
         except ValueError:
             messagebox.showerror("Error", "Ensure all fields are entered correctly!")
             return None
+
+
+# PRINTER SAVE FUNCTIONALITY 
+
+    def Save_printer_data(self):
+        
+        quantity = self.printer_quantity_spinbox.get()
+        if not quantity:
+            messagebox.showerror("Error", "Please enter a valid Quantity!")
+            return None
+        
+        category  = self.printer_category_combobox.get()
+        if category == "In":
+            type_ = self.printer_type_in_combobox.get()
+            if type_ == "One Face":
+                price = 10
+            else:
+                price = 15
+        else:
+            type_ = self.printer_type_out_combobox.get()
+            # price = 
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        current_time = datetime.now().strftime("%H:%M:%S")
+        
+        unique_id = str(uuid.uuid4())
+        row_values = [unique_id, category, type_, quantity, price, current_date, current_time]
+        
+        # Insert in a separate thread to keep UI responsive
+        threading.Thread(target=self._insert_printer_data, args=(row_values,)).start()
+    
+    def _insert_printer_data(self, row_values):
+        path = "printer.xlsx"
+        try:
+            if not os.path.exists(path):
+                self.create_excel_file(path)
+            
+            workbook = openpyxl.load_workbook(path)
+            sheet = workbook.active
+
+            # Append the new product
+            sheet.append(row_values)
+            workbook.save(path)
+            
+            # Insert into Treeview
+            self.treeview5.insert('', tk.END, values=row_values)
+            
+            # Update the stored data
+            self.data_product.append(row_values)
+            
+            # # Clear the input fields
+            # self.reset_product()
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while inserting the product: {e}")
+    
 
 # RETURN PRODUCT FUNCTIONALITY
     
