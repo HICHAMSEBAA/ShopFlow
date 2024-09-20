@@ -1138,21 +1138,13 @@ class ExcelCrafterApp:
         for i in range(9):
             frame_widgets.grid_rowconfigure(i, weight=1)  # Make each row expandable
         
-        # self.printer_category_combobox = None
-        # self.printer_type_out_combobox = None
-        # self.printer_type_in_combobox  = None
-        # self.printer_quantity_spinbox  = None
-        # self.printer_save_button       = None
-        # self.printer_update_button     = None
-        # self.printer_delete_button     = None
-        # self.printer_cancel_button     = None
-        
         # Label and combobox for category
         cattegory_label = ttk.Label(frame_widgets, text="Category:")
         cattegory_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
         self.printer_category_combobox = ttk.Combobox(frame_widgets, values=self.combo_list_printerCatrgory, state="readonly")
         self.printer_category_combobox.current(0)
         self.printer_category_combobox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.printer_category_combobox.bind("<<ComboboxSelected>>", self.on_printer_category_selected)  # Bind category selection event
         
         # Label and combobox for type
         type_in_label = ttk.Label(frame_widgets, text="Type In :")
@@ -1160,6 +1152,7 @@ class ExcelCrafterApp:
         self.printer_type_in_combobox = ttk.Combobox(frame_widgets, values=self.combo_list_printerType_IN, state="readonly")
         self.printer_type_in_combobox.current(0)
         self.printer_type_in_combobox.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        self.printer_type_in_combobox.config(state="disabled")
         
         #  Label and combobox for type
         type_in_label = ttk.Label(frame_widgets, text="Type Out :")
@@ -1167,6 +1160,7 @@ class ExcelCrafterApp:
         self.printer_type_out_combobox = ttk.Combobox(frame_widgets, values=self.combo_list_printerType_OUT, state="readonly")
         self.printer_type_out_combobox.current(0)
         self.printer_type_out_combobox.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
+        self.printer_type_out_combobox.config(state="disabled")
         
         #  Label and spinbox for quantity
         quantity_label = ttk.Label(frame_widgets, text="Quantity")
@@ -1179,9 +1173,10 @@ class ExcelCrafterApp:
         price_label.grid(row=4, column=0, padx=5, pady=5, sticky="w")
         self.printer_price_spinbox = ttk.Spinbox(frame_widgets, from_=0.0, to=4000, increment=100)
         self.printer_price_spinbox.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
+        self.printer_price_spinbox.config(state="disabled")
         
-        #  button for save , command=self.Save_printer_data
-        self.printer_save_button = ttk.Button(frame_widgets, text="Save")
+        #  button for save 
+        self.printer_save_button = ttk.Button(frame_widgets, text="Save", command=self.Save_printer_data)
         self.printer_save_button.grid(row=5, column=0, padx=5, pady=5, sticky="nsew")
 
         
@@ -1203,13 +1198,6 @@ class ExcelCrafterApp:
         
         
         
-        
-        
-        
-        
-        
-        
-
     def add_beverage_sales_widgets(self, frame):
         """Creates and adds the widgets for the product management section."""
         frame_widgets = ttk.LabelFrame(frame, text="Sales")
@@ -1596,6 +1584,21 @@ class ExcelCrafterApp:
             self.type_combobox.config(state="normal")  # normal the type combobox
             self.memoryType_combobox.config(state="disable")  # Enable the type combobox
 
+    def on_printer_category_selected(self, event):
+        selected_category = self.printer_category_combobox.get()
+        if selected_category == "In":
+            self.printer_type_in_combobox.config(state="normal")
+            self.printer_type_out_combobox.config(state="disabled")  # Enable the type combobox
+            self.printer_price_spinbox.config(state="disabled")
+        elif selected_category == "Waste":
+            self.printer_type_in_combobox.config(state="disabled")
+            self.printer_type_out_combobox.config(state="disabled")  # Enable the type combobox
+            self.printer_price_spinbox.config(state="disabled")
+        else:
+            self.printer_type_out_combobox.config(state="normal")  # Enable the type combobox
+            self.printer_price_spinbox.config(state="normal")
+            self.printer_type_in_combobox.config(state="disabled")
+            
     def clear_entry(self, entry, default_text):
         if entry.get() == default_text:
             entry.delete(0, "end")
@@ -1942,12 +1945,12 @@ class ExcelCrafterApp:
 
 # PRINTER SAVE FUNCTIONALITY 
 
-    def Save_printer_data(self):
-        
-        quantity = self.printer_quantity_spinbox.get()
-        if not quantity:
+    def Save_printer_data(self):        
+        try:
+            quantity = int(self.printer_quantity_spinbox.get())
+        except Exception as e:
             messagebox.showerror("Error", "Please enter a valid Quantity!")
-            return None
+            return
         
         category  = self.printer_category_combobox.get()
         if category == "In":
@@ -1956,9 +1959,18 @@ class ExcelCrafterApp:
                 price = 10
             else:
                 price = 15
+        elif category == "out":
+            try:
+                    type_ = self.printer_type_out_combobox.get()
+                    price = int(self.printer_price_spinbox.get())
+            except Exception as e:
+                messagebox.showerror("Error", "Please enter a valid price!")
+                return
         else:
-            type_ = self.printer_type_out_combobox.get()
-            # price = 
+            type_ = "paper"
+            price = 0
+            
+            
         current_date = datetime.now().strftime("%Y-%m-%d")
         current_time = datetime.now().strftime("%H:%M:%S")
         
