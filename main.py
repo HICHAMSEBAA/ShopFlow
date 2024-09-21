@@ -1191,7 +1191,7 @@ class ExcelCrafterApp:
         self.printer_delete_button.config(state="disabled")
         
         #     button for cancel , command=self.printer_canceler
-        self.printer_cancel_button = ttk.Button(frame_widgets, text="Cancel")
+        self.printer_cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset_printer)
         self.printer_cancel_button.grid(row=6, column=1, padx=5, pady=5, sticky="nsew")
         self.printer_cancel_button.config(state="disabled")
         
@@ -1510,7 +1510,40 @@ class ExcelCrafterApp:
                 self.beverage_sales_cancel_button.config(state="normal")
                 
                 # Store the selected item's ID 
-                self.selected_beverage_sales_item = [item_values[0],  item_values[1], item_values[4]]               
+                self.selected_beverage_sales_item = [item_values[0],  item_values[1], item_values[4]] 
+                
+            elif treeview == self.treeview5:
+                self.clear_printer_entry()
+                self.printer_cancel_button.config(state="normal")
+                self.reset_printer_flag = True
+                
+                item_values = treeview.item(selected_item, "values")    
+                
+                self.printer_category_combobox.set(item_values[1])
+                self.printer_category_combobox.config(state="disabled")
+                if  item_values[1] == "In":
+                    self.printer_type_in_combobox.config(state="normal")
+                    self.printer_type_in_combobox.set(item_values[2])
+                    self.printer_type_in_combobox.config(state="disabled")
+                elif item_values[1] == "Out":
+                    self.printer_type_out_combobox.config(state="normal")
+                    self.printer_type_out_combobox.set(item_values[2])
+                    self.printer_type_out_combobox.config(state="disabled")
+                    self.printer_quantity_spinbox.config(state="normal")
+                    self.printer_price_spinbox.delete(0, "end")
+                    self.printer_price_spinbox.insert(0, item_values[4])
+                else:
+                    self.printer_price_spinbox.delete(0, "end")
+                    self.printer_price_spinbox.insert(0, 0)
+                
+                self.printer_quantity_spinbox.config(state="normal")
+                self.printer_quantity_spinbox.delete(0, "end")
+                self.printer_quantity_spinbox.insert(0, item_values[3])
+                
+                # Store the selected item's ID 
+                self.selected_printer_item = [item_values[0],  item_values[1], item_values[4]] 
+                
+                
                 
     def load_data(self, treeview, path):
         """Loads data from the Excel file and inserts it into the treeview."""
@@ -2341,11 +2374,14 @@ class ExcelCrafterApp:
     def reset_printer(self):
         if self.selected_printer_item:
             for item in self.treeview5.get_children():
-                if self.treeview5.item(item, "values")[0] == self.selected_printer_item:
+                if self.treeview5.item(item, "values")[0] == self.selected_printer_item[0]:
                     self.treeview5.selection_remove(item)
                     break
         self.selected_printer_item = None
         
+        self.clear_printer_entry()
+        
+    def clear_printer_entry(self):
         # Reset on the printer button part 
         self.printer_cancel_button.config(state="disabled")
         self.printer_update_button.config(state="disabled")
@@ -2354,6 +2390,7 @@ class ExcelCrafterApp:
         
         # Reset on the printer input part 
         self.printer_category_combobox.current(0)
+        self.printer_category_combobox.config(state="normal")
         self.printer_type_in_combobox.current(0)
         self.printer_type_in_combobox.config(state="disabled")
         self.printer_type_out_combobox.current(0)
@@ -2362,6 +2399,7 @@ class ExcelCrafterApp:
         self.printer_quantity_spinbox.config(state="disabled")
         self.printer_price_spinbox.delete(0, "end")
         self.printer_price_spinbox.config(state="disabled")
+        
         
 # Update tables "1,2" for the return fun ..     
     def update_treeview2(self):
