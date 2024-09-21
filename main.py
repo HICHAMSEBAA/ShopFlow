@@ -1186,7 +1186,7 @@ class ExcelCrafterApp:
         self.printer_update_button.config(state="disabled")
         
         #    button for delete , command=self.printer_deleter
-        self.printer_delete_button = ttk.Button(frame_widgets, text="Delete")
+        self.printer_delete_button = ttk.Button(frame_widgets, text="Delete", command=lambda : self.delete_item(treeview=self.treeview5, selected_item=self.selected_printer_item[0], file_path="printer.xlsx", item_type="printer"))
         self.printer_delete_button.grid(row=6, column=0, padx=5, pady=5, sticky="nsew")
         self.printer_delete_button.config(state="disabled")
         
@@ -1549,9 +1549,7 @@ class ExcelCrafterApp:
                 
                 # Store the selected item's ID 
                 self.selected_printer_item = [item_values[0],  item_values[1], item_values[4]] 
-                
-                
-                
+                          
     def load_data(self, treeview, path):
         """Loads data from the Excel file and inserts it into the treeview."""
         try:
@@ -1820,7 +1818,6 @@ class ExcelCrafterApp:
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred while updating the {item_type.lower()}: {e}")
 
-
 # DELETE FUNCTIONALITY 
 
     def delete_item(self, treeview, selected_item, file_path, item_type):
@@ -1856,6 +1853,8 @@ class ExcelCrafterApp:
                     self.reset_product()
                 elif item_type.lower() == "beverage":
                     self.reset_beverage()
+                elif item_type.lower() == "printer":
+                    self.reset_printer()
 
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred while deleting the {item_type.lower()}: {e}")
@@ -1985,7 +1984,6 @@ class ExcelCrafterApp:
             messagebox.showerror("Error", "Ensure all fields are entered correctly!")
             return None
 
-
 # PRINTER SAVE FUNCTIONALITY 
 
     def Save_printer_data(self):        
@@ -2048,7 +2046,6 @@ class ExcelCrafterApp:
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while inserting the product: {e}")
     
-
 # RETURN PRODUCT FUNCTIONALITY
     
     def return_product(self):
@@ -2400,9 +2397,11 @@ class ExcelCrafterApp:
         self.printer_category_combobox.config(state="normal")
         self.printer_type_in_combobox.current(0)
         self.printer_type_in_combobox.config(state="disabled")
+        self.printer_type_out_combobox.config(state="normal")
         self.printer_type_out_combobox.current(0)
         self.printer_type_out_combobox.config(state="disabled")
         self.printer_quantity_spinbox.delete(0, "end")
+        self.printer_price_spinbox.config(state="normal")
         self.printer_price_spinbox.delete(0, "end")
         self.printer_price_spinbox.config(state="disabled")
          
