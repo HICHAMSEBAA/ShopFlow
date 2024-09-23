@@ -1351,6 +1351,8 @@ class ExcelCrafterApp:
             self.beverage_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview3))
         elif path == "beverage_sales.xlsx":
             self.beverage_sales_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview4))
+        elif path == "printer.xlsx":
+            self.printer_search_entry.bind("<KeyRelease>", lambda event: self.search_data(event, search_entry=search_entry, treeview=self.treeview5))
             
         # Configure grid weight to ensure proper resizing
         search_frame.columnconfigure(1, weight=1)
@@ -1526,16 +1528,7 @@ class ExcelCrafterApp:
                 self.printer_price_spinbox.delete(0, "end")
                 self.printer_price_spinbox.insert(0, item_values[4])
                 
-                if  item_values[1] == "In":
-                    self.printer_type_in_combobox.config(state="normal")
-                    self.printer_type_in_combobox.set(item_values[2])
-                    self.printer_price_spinbox.config(state="disabled")
-                elif item_values[1] == "Out":
-                    self.printer_type_out_combobox.config(state="normal")
-                    self.printer_type_out_combobox.set(item_values[2])
-                else:
-                    self.printer_price_spinbox.delete(0, "end")
-                    self.printer_price_spinbox.insert(0, 0)
+                
                 
                 self.printer_cancel_button.config(state="normal")
                 self.printer_save_button.config(state="disabled")
@@ -2033,7 +2026,7 @@ class ExcelCrafterApp:
 
             
             # Update the stored data
-            # self.data_printer.append(row_values)
+            self.data_printer.append(row_values)
             
             # # Clear the input fields
             self.reset_printer()
@@ -2216,6 +2209,8 @@ class ExcelCrafterApp:
             all_data = self.data_beverage
         elif treeview == self.treeview4:
             all_data = self.data_beverage_sales
+        elif treeview == self.treeview5:
+            all_data = self.data_printer
         else:
             return
 
