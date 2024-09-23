@@ -1181,7 +1181,7 @@ class ExcelCrafterApp:
 
         
         #    button for update , command=self.printer_updater
-        self.printer_update_button = ttk.Button(frame_widgets, text="Update")
+        self.printer_update_button = ttk.Button(frame_widgets, text="Update", command=lambda : self.update_item(self.treeview5, self.selected_printer_item[0], "printer.xlsx", item_type="Printer"))
         self.printer_update_button.grid(row=5, column=1, padx=5, pady=5, sticky="nsew")
         self.printer_update_button.config(state="disabled")
         
@@ -1194,9 +1194,6 @@ class ExcelCrafterApp:
         self.printer_cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset_printer)
         self.printer_cancel_button.grid(row=6, column=1, padx=5, pady=5, sticky="nsew")
         self.printer_cancel_button.config(state="disabled")
-        
-        
-        
         
     def add_beverage_sales_widgets(self, frame):
         """Creates and adds the widgets for the product management section."""
@@ -1755,24 +1752,31 @@ class ExcelCrafterApp:
         
         if response:
             # Validate inputs based on item type
-            if item_type.lower() == "product":
+            if   item_type.lower() == "product":
                 validated_data = self.validate_inputs()  # For products
-            else:
+            elif item_type.lower() == "beverage":
                 validated_data = self.validate_beverage_input()  # For beverages
+            elif item_type.lower() == "printer":
+                validated_data = self.validate_printer_input()  # For 
                 
             if not validated_data:
                 return
 
-            name, category, product_type_or_brand, quantity, price = validated_data
+            if item_type.lower() == "product" or item_type.lower() == "Beverage":
+                name, category, product_type_or_brand, quantity, price = validated_data
+            else:
+                category, type_, quantity, price = validated_data
             current_date = datetime.now().strftime("%Y-%m-%d")
             current_time = datetime.now().strftime("%H:%M:%S")
             
             # Prepare new data based on item type
             if item_type.lower() == "product":
                 new_data = [name, category, product_type_or_brand, quantity, price, current_date, current_time]
-            else:  # For beverages, assuming an additional column for 'Brand'
+            elif item_type.lower() == "beverage": # For beverages, assuming an additional column for 'Brand'
                 new_data = [selected_item, name, category, product_type_or_brand, quantity, price, current_date, current_time]
-
+            elif item_type.lower() == "printer":
+                new_data = [selected_item, category, type_, quantity, price, current_date, current_time]
+            
             # Update Treeview
             for item in treeview.get_children():
                 if treeview.item(item, "values")[0] == selected_item:
@@ -1796,7 +1800,7 @@ class ExcelCrafterApp:
                             row[4].value = price
                             row[5].value = current_date
                             row[6].value = current_time
-                        else:
+                        elif item_type.lower() == "beverage":
                             # For beverages: update relevant columns
                             row[2].value = category
                             row[3].value = product_type_or_brand  # Brand column for beverages
@@ -1804,6 +1808,13 @@ class ExcelCrafterApp:
                             row[5].value = price
                             row[6].value = current_date
                             row[7].value = current_time
+                        elif item_type.lower() == "printer":
+                            row[1].value = category
+                            row[2].value = type_
+                            row[3].value = quantity
+                            row[4].value = price
+                            row[5].value = current_date
+                            row[6].value = current_time
                         break
 
                 workbook.save(file_path)
@@ -1814,11 +1825,13 @@ class ExcelCrafterApp:
                     self.reset_product()
                 elif item_type.lower() == "beverage":
                     self.reset_beverage()
+                elif item_type.lower() == "printer":
+                    self.reset_printer()
 
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred while updating the {item_type.lower()}: {e}")
 
-# DELETE FUNCTIONALITY 
+# DELETE FUNCTIONALITY
 
     def delete_item(self, treeview, selected_item, file_path, item_type):
         if not selected_item:
@@ -1986,41 +1999,23 @@ class ExcelCrafterApp:
 
 # PRINTER SAVE FUNCTIONALITY 
 
-    def Save_printer_data(self):        
-        try:
-            quantity = int(self.printer_quantity_spinbox.get())
-        except Exception as e:
-            messagebox.showerror("Error", "Please enter a valid Quantity!")
+    def Save_printer_data(self): 
+        
+        validated_data = self.validate_printer_input()
+        if not validated_data:
             return
         
-        category  = self.printer_category_combobox.get()
-        if category == "In":
-            type_ = self.printer_type_in_combobox.get()
-            if type_ == "One Face":
-                price = 10
-            else:
-                price = 15
-        elif category == "Out":
-            try:
-                    type_ = self.printer_type_out_combobox.get()
-                    price = int(self.printer_price_spinbox.get())
-            except Exception as e:
-                messagebox.showerror("Error", "Please enter a valid price!")
-                return
-        else:
-            type_ = "paper"
-            price = 0
+        category, type_, quantity, price = validated_data
+        if category != 0:
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            current_time = datetime.now().strftime("%H:%M:%S")
             
+            unique_id = str(uuid.uuid4())
+            row_values = [unique_id, category, type_, quantity, price, current_date, current_time]
             
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        current_time = datetime.now().strftime("%H:%M:%S")
-        
-        unique_id = str(uuid.uuid4())
-        row_values = [unique_id, category, type_, quantity, price, current_date, current_time]
-        
-        # Insert in a separate thread to keep UI responsive
-        threading.Thread(target=self._insert_printer_data, args=(row_values,)).start()
-    
+            # Insert in a separate thread to keep UI responsive
+            threading.Thread(target=self._insert_printer_data, args=(row_values,)).start()
+
     def _insert_printer_data(self, row_values):
         path = "printer.xlsx"
         try:
@@ -2045,7 +2040,35 @@ class ExcelCrafterApp:
             self.reset_printer()
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while inserting the product: {e}")
-    
+ 
+    def validate_printer_input(self):
+        
+        try:
+            quantity = int(self.printer_quantity_spinbox.get())
+        except Exception as e:
+            messagebox.showerror("Error", "Please enter a valid Quantity!")
+            return
+        
+        category  = self.printer_category_combobox.get()
+        if category == "In":
+            type_ = self.printer_type_in_combobox.get()
+            if type_ == "One Face":
+                price = 10
+            else:
+                price = 15
+        elif category == "Out":
+            try:
+                    type_ = self.printer_type_out_combobox.get()
+                    price = int(self.printer_price_spinbox.get())
+            except Exception as e:
+                messagebox.showerror("Error", "Please enter a valid price!")
+                return None
+        else:
+            type_ = "paper"
+            price = 0
+            
+        return category, type_, quantity, price
+   
 # RETURN PRODUCT FUNCTIONALITY
     
     def return_product(self):
