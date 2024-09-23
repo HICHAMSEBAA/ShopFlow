@@ -1517,17 +1517,6 @@ class ExcelCrafterApp:
                 
                 self.printer_category_combobox.set(item_values[1])
                 self.printer_category_combobox.config(state="disabled")
-                if  item_values[1] == "In":
-                    self.printer_type_in_combobox.config(state="normal")
-                    self.printer_type_in_combobox.set(item_values[2])
-                    self.printer_type_in_combobox.config(state="disabled")
-                elif item_values[1] == "Out":
-                    self.printer_type_out_combobox.config(state="normal")
-                    self.printer_type_out_combobox.set(item_values[2])
-                    self.printer_type_out_combobox.config(state="disabled")
-                else:
-                    self.printer_price_spinbox.delete(0, "end")
-                    self.printer_price_spinbox.insert(0, 0)
                 
                 self.printer_quantity_spinbox.config(state="normal")
                 self.printer_quantity_spinbox.delete(0, "end")
@@ -1536,7 +1525,17 @@ class ExcelCrafterApp:
                 self.printer_price_spinbox.config(state="normal")
                 self.printer_price_spinbox.delete(0, "end")
                 self.printer_price_spinbox.insert(0, item_values[4])
-                self.printer_price_spinbox.config(state="disabled")
+                
+                if  item_values[1] == "In":
+                    self.printer_type_in_combobox.config(state="normal")
+                    self.printer_type_in_combobox.set(item_values[2])
+                    self.printer_price_spinbox.config(state="disabled")
+                elif item_values[1] == "Out":
+                    self.printer_type_out_combobox.config(state="normal")
+                    self.printer_type_out_combobox.set(item_values[2])
+                else:
+                    self.printer_price_spinbox.delete(0, "end")
+                    self.printer_price_spinbox.insert(0, 0)
                 
                 self.printer_cancel_button.config(state="normal")
                 self.printer_save_button.config(state="disabled")
