@@ -2494,6 +2494,9 @@ class ExcelCrafterApp:
         start_date = datetime.strptime(start_date_, '%Y-%m-%d')
         end_date = datetime.strptime(end_date_, '%Y-%m-%d')
 
+        if end_date < start_date:
+            messagebox.showerror("Error", "The start date must be earlier than the end date.")
+
         for row in sheet.iter_rows(min_row=2, values_only=True):
             date_str = row[6]  # Assuming 'Date' is in the 7th column (index 6)
             if isinstance(date_str, str):
@@ -2519,6 +2522,10 @@ class ExcelCrafterApp:
         start_date = datetime.strptime(start_date_, '%Y-%m-%d')
         end_date = datetime.strptime(end_date_, '%Y-%m-%d')
 
+        if end_date < start_date:
+            messagebox.showerror("Error", "The start date must be earlier than the end date.")
+
+        
         for row in sheet.iter_rows(min_row=2, values_only=True):
             date_str = row[6]  # Assuming 'Date' is in the 7th column (index 6)
             if isinstance(date_str, str):
@@ -2544,6 +2551,10 @@ class ExcelCrafterApp:
         end_date_ = self.printer_date_end.get_date().strftime('%Y-%m-%d')
         start_date = datetime.strptime(start_date_, '%Y-%m-%d')
         end_date = datetime.strptime(end_date_, '%Y-%m-%d')
+        
+        if end_date < start_date:
+            messagebox.showerror("Error", "The start date must be earlier than the end date.")
+
 
         for row in sheet.iter_rows(min_row=2, values_only=True):
             date_str = row[5]  # Assuming 'Date' is in the 7th column (index 6)
