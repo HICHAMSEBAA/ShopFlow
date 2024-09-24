@@ -35,7 +35,7 @@ class ExcelCrafterApp:
         # Initialize printer-related
         self.combo_list_printerCatrgory = ["Out", "In", "Waste"]
         self.combo_list_printerType_OUT = ["Ram", "Tonore"]
-        self.combo_list_printerType_IN  = ["One Face", "Duable Face"]
+        self.combo_list_printerType_IN  = ["One Face", "Duable Face", "اؤهيايهاؤهي"]
 
     # product section ---------------------------------------------------------------------
     
@@ -1194,6 +1194,29 @@ class ExcelCrafterApp:
         self.printer_cancel_button = ttk.Button(frame_widgets, text="Cancel", command=self.reset_printer)
         self.printer_cancel_button.grid(row=6, column=1, padx=5, pady=5, sticky="nsew")
         self.printer_cancel_button.config(state="disabled")
+        
+        #    Separator for better UI structure
+        separator = ttk.Separator(frame_widgets)
+        separator.grid(row=7, column=0, columnspan=2, padx=(20, 10), pady=10, sticky="ew")
+        
+        #    Create a DateEntry widget start
+        date_start_label = ttk.Label(frame_widgets, text="Start Date")
+        date_start_label.grid(row=8, column=0, padx=5, pady=5, sticky="w")
+        self.printer_date_start = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
+        self.printer_date_start.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
+        
+        #    Create a DateEntry widget end
+        date_end_label = ttk.Label(frame_widgets, text="End Date")
+        date_end_label.grid(row=9, column=0, padx=5, pady=5, sticky="w")
+        self.printer_date_end = DateEntry(frame_widgets, width=12, background='darkblue', foreground='white', borderwidth=2)
+        self.printer_date_end.grid(row=9, column=1, padx=5, pady=5, sticky="ew")
+        
+        # 
+        calculate_sales_button = ttk.Button(frame_widgets, text="Total", command=self.calculate_printer_sales)
+        calculate_sales_button.grid(row=10, column=0, padx=5, pady=5, sticky="nsew")
+        self.printer_calculate_sales_entry = ttk.Entry(frame_widgets)
+        self.printer_calculate_sales_entry.grid(row=10, column=1, padx=5, pady=5, sticky="ew")
+        self.printer_calculate_sales_entry.config(state="disabled")
         
     def add_beverage_sales_widgets(self, frame):
         """Creates and adds the widgets for the product management section."""
@@ -2509,6 +2532,33 @@ class ExcelCrafterApp:
         self.beverage_calculate_sales_entry.delete(0, "end")
         self.beverage_calculate_sales_entry.insert(0, string=f"{total_sales_amount} DA")
         self.beverage_calculate_sales_entry.config(state="disabled")
+        
+    # Function to calculate total sales between two dates 
+    def calculate_printer_sales(self):
+        
+        file_path = 'printer.xlsx'
+        wb = openpyxl.load_workbook(file_path)
+        sheet = wb.active
+        total_sales_amount = 0
+        start_date_ = self.printer_date_start.get_date().strftime('%Y-%m-%d')
+        end_date_ = self.printer_date_end.get_date().strftime('%Y-%m-%d')
+        start_date = datetime.strptime(start_date_, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date_, '%Y-%m-%d')
+
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            date_str = row[5]  # Assuming 'Date' is in the 7th column (index 6)
+            if isinstance(date_str, str):
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+
+                if start_date <= date_obj <= end_date and row[1] == "In":
+                    quantity = float(row[3])  # Quantity in the 5th column (index 4)
+                    price = float(row[4])     # Price in the 6th column (index 5)
+                    total_sales_amount += quantity * price
+        self.printer_calculate_sales_entry.config(state="normal")
+        self.printer_calculate_sales_entry.delete(0, "end")
+        self.printer_calculate_sales_entry.insert(0, string=f"{total_sales_amount} DA")
+        self.printer_calculate_sales_entry.config(state="disabled")
+        
 
 #FUN PART ------------------------------------------------------------------------------
 
