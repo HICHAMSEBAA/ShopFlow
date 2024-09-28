@@ -30,7 +30,7 @@ class ExcelCrafterApp:
         
         # Initialize beverage-related
         self.combo_list_beverageCategory = ["Soft Drinks", "Juices", "Water", "Energy Drinks", "Tea & Coffee", "Alcoholic Beverages", "Dairy-Based Drinks", "Smoothies", "Mocktails", "Herbal and Health Drinks" ] 
-        self.combo_list_beveragebrand = ["Coca-Cola", "Pepsi", "7UP", "Sprite", "Fanta"]
+        self.combo_list_beveragebrand = ["Coca-Cola", "Pepsi", "7UP", "Sprite", "Fanta", "Other"]
         
         # Initialize printer-related
         self.combo_list_printerCatrgory = ["Out", "In", "Waste"]
