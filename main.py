@@ -19,7 +19,7 @@ class ExcelCrafterApp:
         
         # Initialize the styles for the application
         self.style = ttk.Style(root)
-        root.tk.call("source", "forest-light.tcl")  # Load the custom theme from a Tcl file
+        root.tk.call("source", "/home/hicham/Hicham/Python/ShopFlow/forest-light.tcl")  # Load the custom theme from a Tcl file
         self.style.theme_use("forest-light")        # Apply the "forest-light" theme
         
         # Initialize product-related dropdown options (ComboBox lists)
@@ -35,7 +35,7 @@ class ExcelCrafterApp:
         # Initialize printer-related
         self.combo_list_printerCatrgory = ["Out", "In", "Waste"]
         self.combo_list_printerType_OUT = ["Ram", "Tonore"]
-        self.combo_list_printerType_IN  = ["One Face", "Duable Face", "اؤهيايهاؤهي"]
+        self.combo_list_printerType_IN  = ["One Face", "Duable Face"]
 
     # product section ---------------------------------------------------------------------
     
@@ -1562,8 +1562,8 @@ class ExcelCrafterApp:
                 # Store the selected item's ID 
                 self.selected_printer_item = [item_values[0],  item_values[1], item_values[4]] 
                           
-    def load_data(self, treeview, path):
-        """Loads data from the Excel file and inserts it into the treeview."""
+    def all_data(self, path):
+        """ Loads all data from the specified Excel file and stores it in a corresponding attribute. """
         try:
             workbook = openpyxl.load_workbook(path)
             sheet = workbook.active
@@ -1583,21 +1583,76 @@ class ExcelCrafterApp:
             elif path == "printer.xlsx":
                 self.data_printer = list(sheet.values)  # Store all data for searching
                 all_data = self.data_printer
-            headers = all_data[0]
-            treeview["columns"] = headers
-            for col in headers:
-                treeview.heading(col, text=col, command=lambda _col=col: self.sort_treeview(_col, False, treeview=treeview))
-                treeview.column(col, width=100, anchor="center")
-
-            treeview.delete(*treeview.get_children())  # Clear existing data
-
-            for value_tuple in all_data[1:]:
-                treeview.insert('', tk.END, values=value_tuple)
+            
+            return all_data
+            
         except FileNotFoundError:
             # If the file doesn't exist, create it with headers
             self.create_excel_file(path)
+            return []  # return empty list if newly created
         except Exception as e:
             print(f"Error loading data: {e}")
+            return []  # return empty list if newly created
+        
+    
+    def load_data(self, treeview, path):
+        """Loads data from the Excel file and inserts it into the treeview."""
+        all_data = self.all_data(path)
+
+        if not all_data:
+            return  # no data, skip
+
+        headers = all_data[0]  # first row = header
+
+        # Configure treeview columns
+        treeview["columns"] = headers
+        treeview.delete(*treeview.get_children())  # Clear old data
+
+        for col in headers:
+            treeview.heading(col, text=col,
+                            command=lambda _col=col: self.sort_treeview(_col, False, treeview=treeview))
+            treeview.column(col, width=120, anchor="center")
+            
+        treeview.delete(*treeview.get_children())  # Clear existing data
+
+        # Insert data rows (skip header)
+        for row in all_data[1:]:
+            treeview.insert("", tk.END, values=row)
+        # try:
+        #     workbook = openpyxl.load_workbook(path)
+        #     sheet = workbook.active
+            
+        #     # if path == "products.xlsx":
+        #     #     self.data_product = list(sheet.values)  # Store all data for searching
+        #     #     all_data = self.data_product
+        #     # elif path == "sales.xlsx":
+        #     #     self.data_sales = list(sheet.values)  # Store all data for searching
+        #     #     all_data = self.data_sales
+        #     # elif path == "beverage.xlsx":
+        #     #     self.data_beverage = list(sheet.values)  # Store all data for searching
+        #     #     all_data = self.data_beverage
+        #     # elif path == "beverage_sales.xlsx":
+        #     #     self.data_beverage_sales = list(sheet.values)  # Store all data for searching
+        #     #     all_data = self.data_beverage_sales
+        #     # elif path == "printer.xlsx":
+        #     #     self.data_printer = list(sheet.values)  # Store all data for searching
+        #     #     all_data = self.data_printer
+        #     all_data = self.all_data(path)
+        #     headers = all_data[0]
+        #     treeview["columns"] = headers
+        #     for col in headers:
+        #         treeview.heading(col, text=col, command=lambda _col=col: self.sort_treeview(_col, False, treeview=treeview))
+        #         treeview.column(col, width=100, anchor="center")
+
+        #     treeview.delete(*treeview.get_children())  # Clear existing data
+
+        #     for value_tuple in all_data[1:]:
+        #         treeview.insert('', tk.END, values=value_tuple)
+        # except FileNotFoundError:
+        #     # If the file doesn't exist, create it with headers
+        #     self.create_excel_file(path)
+        # except Exception as e:
+        #     print(f"Error loading data: {e}")
 
     def create_excel_file(self, path):
         """Creates a new Excel file with headers."""
@@ -2244,6 +2299,7 @@ class ExcelCrafterApp:
 # RESET FUNCTIONALITY
 
     def reset_product(self):
+        self.all_data("products.xlsx")
         if self.selected_prodcut_item:
             for item in self.treeview1.get_children():
                 if self.treeview1.item(item, "values")[0] == self.selected_prodcut_item:
@@ -2271,6 +2327,7 @@ class ExcelCrafterApp:
         self.reset_product_flag = False
 
     def reset_beverage(self):
+        self.all_data("beverage.xlsx")
         if self.selected_beverage_item:
             for item in self.treeview3.get_children():
                 if self.treeview3.item(item, "values")[0] == self.selected_beverage_item:
@@ -2359,6 +2416,7 @@ class ExcelCrafterApp:
         self.beverage_sales_cancel_button.config(state="disabled")
         
     def reset_product_sales(self):
+        self.all_data("sales.xlsx")
         if self.selected_sales_item:
             try:
                 selected_quantity = int(self.selected_sales_item[2])
@@ -2391,6 +2449,7 @@ class ExcelCrafterApp:
         self.reset_sales_flag = False
     
     def reset_beverage_sales(self):
+        self.all_data("beverage_sales.xlsx")
         if self.selected_beverage_sales_item:
             try:
                 selected_quantity = int(self.selected_beverage_sales_item[2])
@@ -2416,6 +2475,7 @@ class ExcelCrafterApp:
             self.update_treeview3()
           
     def reset_printer(self):
+        self.all_data("printer.xlsx")
         if self.selected_printer_item:
             for item in self.treeview5.get_children():
                 if self.treeview5.item(item, "values")[0] == self.selected_printer_item[0]:
